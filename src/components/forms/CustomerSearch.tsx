@@ -116,7 +116,7 @@ export function CustomerSearch({
           placeholder={placeholder}
           className={cn(
             "w-full rounded-md border border-input bg-background pl-9 pr-9 py-2 text-sm",
-            "placeholder:text-muted-foreground",
+            "text-foreground placeholder:text-muted-foreground",
             "focus:outline-none focus:ring-2 focus:ring-ring"
           )}
         />

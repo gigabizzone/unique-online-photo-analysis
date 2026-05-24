@@ -111,6 +111,7 @@ export function ColoredSlider({
           aria-label={label ? `${label} numeric` : "numeric value"}
           className={cn(
             "rounded-md border border-input bg-background px-2 py-1.5 text-center text-sm",
+            "text-foreground", // explicit dark text — inputs don't inherit color
             "focus:outline-none focus:ring-2 focus:ring-ring",
             "disabled:opacity-50"
           )}

@@ -3,30 +3,19 @@
 import { useEffect } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { profileSchema, type ProfileFormData } from "@/lib/schemas/profile";
 
 // Step 1 of every analysis form (PRD §5.3): collects customer profile,
 // emits the typed data on submit. The page above this owns whether to
 // also upsert into the Customer table — this component is pure UI.
-
-export const profileSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required"),
-  lastName: z.string().trim().min(1, "Last name is required"),
-  gender: z.enum(["Male", "Female", "Other"]),
-  email: z.string().trim().email("Enter a valid email"),
-  whatsapp: z
-    .string()
-    .trim()
-    .regex(
-      /^\+[1-9]\d{7,14}$/,
-      "WhatsApp number must be E.164 format, e.g. +91XXXXXXXXXX"
-    ),
-});
-
-export type ProfileFormData = z.infer<typeof profileSchema>;
+//
+// The Zod schema lives in src/lib/schemas/profile.ts so it's importable
+// from server-side API routes too (Next.js forbids dotting into a
+// "use client" module from server code).
+export { profileSchema, type ProfileFormData };
 
 interface ProfileSectionProps {
   defaultValues?: Partial<ProfileFormData>;
@@ -38,7 +27,10 @@ interface ProfileSectionProps {
 
 const FIELD_INPUT_CLS = cn(
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-  "placeholder:text-muted-foreground",
+  // Force dark text on light input bg — inputs don't inherit `color` from
+  // ancestor elements per browser UA stylesheets, so without this they'd
+  // show as white-on-white inside the dashboard's text-white wrapper.
+  "text-foreground placeholder:text-muted-foreground",
   "focus:outline-none focus:ring-2 focus:ring-ring",
   "disabled:opacity-50"
 );

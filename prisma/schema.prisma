@@ -31,12 +31,14 @@ model Customer {
   firstName String
   lastName  String
   gender    String
-  email     String
+  // Email is the upsert key for the analysis forms — one customer per email.
+  // (Small divergence from PRD §8.1 which had email as a non-unique index;
+  // PRD §6 elsewhere describes upsert-by-email so adding @unique aligns.)
+  email     String   @unique
   whatsapp  String
   createdAt DateTime @default(now())
   entries   AnalysisEntry[]
 
-  @@index([email])
   @@index([whatsapp])
 }
 
@@ -68,4 +70,14 @@ enum AnalysisType {
   LIFE_CHALLENGES
   OVERALL
   WEARABLES
+}
+
+// PRD §8.2 — yearly per-type sequence for publicId (APS-{YYYY}-{TYPE3}-{00000}).
+// One row per (year, type) combination, e.g. key = "CHK-2026", value = 42.
+// Atomically incremented via Prisma's upsert + { increment: 1 }, so concurrent
+// requests can't ever produce duplicate publicIds.
+model Counter {
+  key       String   @id
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
 }

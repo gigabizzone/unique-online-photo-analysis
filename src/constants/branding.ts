@@ -30,8 +30,8 @@ export const SOCIAL_LINKS = [
   },
   {
     name: "Website",
-    url: "https://www.auraphotoscience.com",
-    handle: "www.auraphotoscience.com",
+    url: "https://auraphotoscience.com/",
+    handle: "auraphotoscience.com",
   },
 ] as const;
 

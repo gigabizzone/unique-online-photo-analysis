@@ -19,7 +19,6 @@ import {
 
 import { BRAND, ANALYSIS_TYPES } from "@/constants/branding";
 import { AuraLogo } from "@/components/AuraLogo";
-import { SocialFooter } from "@/components/SocialFooter";
 import { cn } from "@/lib/utils";
 
 // Map iconName from constants to the actual lucide-react component.
@@ -46,8 +45,7 @@ export default function DashboardHome() {
   const today = formatDate(new Date());
 
   return (
-    <>
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         {/* HERO */}
         <section className="text-center">
           <div className="flex justify-center">
@@ -140,10 +138,7 @@ export default function DashboardHome() {
             <SettingsIcon className="h-4 w-4" />
             Settings
           </Link>
-        </section>
-      </main>
-
-      <SocialFooter />
-    </>
+      </section>
+    </main>
   );
 }

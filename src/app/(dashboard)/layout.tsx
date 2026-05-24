@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { SocialFooter } from "@/components/SocialFooter";
 
 export default async function DashboardLayout({
   children,
@@ -22,9 +23,10 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="aps-gradient-bg min-h-screen text-white">
+    <div className="aps-gradient-bg min-h-screen text-white flex flex-col">
       <DashboardHeader email={session.user.email} />
-      {children}
+      <div className="flex-1">{children}</div>
+      <SocialFooter />
     </div>
   );
 }

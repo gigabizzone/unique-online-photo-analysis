@@ -28,12 +28,16 @@ export async function middleware(req: NextRequest) {
 
 // Run middleware on every path EXCEPT:
 //  - /api/auth/*        (NextAuth's own routes)
+//  - /api/report/*      (PDF proxy — must be reachable without auth so the
+//                        public report URL + QR code work; the route itself
+//                        only serves data when the publicId exists, so it's
+//                        not a "private data" endpoint)
 //  - /login             (the login page)
 //  - /report/*          (public report pages, Phase 10)
 //  - /_next/*           (Next.js internals: static, image optimization)
 //  - /favicon.ico, etc. (static assets at the root)
 export const config = {
   matcher: [
-    "/((?!api/auth|login|report|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|gif)).*)",
+    "/((?!api/auth|api/report|login|report|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|gif)).*)",
   ],
 };

@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
+import { CheckCircle2, ArrowLeft, Loader2, Download } from "lucide-react";
 
 import {
   ProfileSection,
@@ -37,6 +37,7 @@ interface SaveResult {
   publicId: string;
   id: string;
   customerId: string;
+  pdfStorageUrl?: string | null;
 }
 
 type Phase = "profile" | "entry" | "saved";
@@ -78,7 +79,8 @@ export default function ChakraPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await fetch("/api/analysis/chakra", {
+      // 1. Save the analysis entry
+      const saveRes = await fetch("/api/analysis/chakra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,13 +89,39 @@ export default function ChakraPage() {
           summary,
         }),
       });
-      const body = await res.json();
-      if (!res.ok) {
-        setError(body.error ?? `Save failed (${res.status})`);
+      const saveBody = await saveRes.json();
+      if (!saveRes.ok) {
+        setError(saveBody.error ?? `Save failed (${saveRes.status})`);
         setSubmitting(false);
         return;
       }
-      setSaved(body as SaveResult);
+
+      // 2. Generate the PDF (render → upload to Supabase Storage)
+      const genRes = await fetch("/api/report/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entryId: saveBody.id }),
+      });
+      const genBody = await genRes.json();
+      if (!genRes.ok) {
+        // The entry was saved, but the PDF failed. Surface a soft error so
+        // the admin can retry from the History page later.
+        setSaved({
+          ...(saveBody as SaveResult),
+          pdfStorageUrl: null,
+        });
+        setError(
+          `Entry saved as ${saveBody.publicId} but PDF generation failed: ${genBody.error ?? genRes.status}. You can retry from the History page.`
+        );
+        setPhase("saved");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      setSaved({
+        ...(saveBody as SaveResult),
+        pdfStorageUrl: genBody.pdfStorageUrl,
+      });
       setPhase("saved");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -134,21 +162,38 @@ export default function ChakraPage() {
             </div>
           </div>
 
+          {error && (
+            <div
+              role="alert"
+              className="mt-4 rounded-md border border-amber-400/40 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {error}
+            </div>
+          )}
+
           <div className="mt-6 rounded-md border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-            <p>
-              <strong>Phase 7 will replace this card</strong> with a Download
-              PDF / Send Email / Send via WhatsApp action panel. For now the
-              entry is persisted and accessible via the History page (Phase 12)
-              or directly in Supabase Table Editor.
-            </p>
+            Email and WhatsApp actions arrive in Phase 8 + Phase 9. For now you
+            can download the PDF or view it in Supabase Storage.
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            <Button onClick={startAnother} variant="gold">
+            {saved.pdfStorageUrl ? (
+              <a
+                href={`/api/report/${saved.publicId}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="gold">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+              </a>
+            ) : null}
+            <Button onClick={startAnother} variant="outline">
               Enter another chakra report
             </Button>
             <Link href="/">
-              <Button variant="outline">Back to dashboard</Button>
+              <Button variant="ghost">Back to dashboard</Button>
             </Link>
           </div>
         </div>

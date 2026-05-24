@@ -17,10 +17,13 @@ datasource db {
 }
 
 model Admin {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  // PRD §4.2 lockout: 5 failed attempts → 15-minute lock
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 model Customer {

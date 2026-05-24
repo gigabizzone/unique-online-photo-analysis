@@ -1,0 +1,68 @@
+// Prisma schema for Aura Photo Science admin app
+// PRD v3.0 §8.1
+//
+// IMPORTANT: directUrl is mandatory for Supabase + Prisma migrations.
+// Supabase's transaction pooler (port 6543) does NOT support prepared
+// statements that migrations require — directUrl (port 5432) bypasses
+// the transaction pooler for migration runs.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled, port 6543
+  directUrl = env("DIRECT_URL")   // direct, port 5432 (required by Supabase migrations)
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  gender    String
+  email     String
+  whatsapp  String
+  createdAt DateTime @default(now())
+  entries   AnalysisEntry[]
+
+  @@index([email])
+  @@index([whatsapp])
+}
+
+model AnalysisEntry {
+  id               String       @id @default(cuid())
+  publicId         String       @unique
+  customerId       String
+  customer         Customer     @relation(fields: [customerId], references: [id])
+  analysisType     AnalysisType
+  data             Json
+  summary          String       @db.Text
+  pdfStorageUrl    String?
+  qrCodeUrl        String?
+  emailSentAt      DateTime?
+  adminAckSentAt   DateTime?
+  whatsappOpenedAt DateTime?
+  pdfDownloadedAt  DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([analysisType])
+  @@index([createdAt])
+}
+
+enum AnalysisType {
+  CHAKRA
+  PLANETS
+  ELEMENTS
+  LIFE_CHALLENGES
+  OVERALL
+  WEARABLES
+}

@@ -18,13 +18,35 @@ import { AuraLogo } from "@/components/AuraLogo";
 import { SocialFooter } from "@/components/SocialFooter";
 import { Button } from "@/components/ui/button";
 import {
-  ChakraPublicView,
-  type ChakraPublicRow,
-} from "@/components/reports/public/ChakraPublicView";
-import {
-  PlanetsPublicView,
-  type PlanetPublicRow,
-} from "@/components/reports/public/PlanetsPublicView";
+  ScoreRowsPublicView,
+  type ScoreRowsPublicRow,
+} from "@/components/reports/public/ScoreRowsPublicView";
+
+const PUBLIC_VIEW_CONFIG: Record<
+  string,
+  { sectionHeading: string; notesHeading: string; dataKey: string }
+> = {
+  CHAKRA: {
+    sectionHeading: "Chakra Energy Readings",
+    notesHeading: "Implication",
+    dataKey: "chakras",
+  },
+  PLANETS: {
+    sectionHeading: "Planetary Energy Readings",
+    notesHeading: "Recommendation",
+    dataKey: "planets",
+  },
+  ELEMENTS: {
+    sectionHeading: "Elemental Energy Readings",
+    notesHeading: "Implication",
+    dataKey: "elements",
+  },
+  OVERALL: {
+    sectionHeading: "Overall Energy Readings",
+    notesHeading: "Implication",
+    dataKey: "overall",
+  },
+};
 
 interface ReportPageProps {
   params: { publicId: string };
@@ -78,24 +100,30 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
   const pdfHref = `/api/report/${entry.publicId}/pdf`;
   const pdfReady = !!entry.pdfStorageUrl;
 
-  // Per-type body. For now only CHAKRA is implemented (Phase 6+7);
-  // the other five forms arrive in Phase 11 with their own *PublicView
-  // components. Falls back to a friendly placeholder for those types
-  // so the page doesn't crash if a non-Chakra entry is opened early.
+  // Per-type body. Most analyses share the "score row + notes" shape,
+  // handled by the generic ScoreRowsPublicView with a per-type config.
+  // Phase 11.4 Life Challenges and Phase 11.6 Wearables ship their own
+  // views (different row shape) and will fall through to the placeholder
+  // until those phases land.
   let body: React.ReactNode;
-  if (entry.analysisType === "CHAKRA") {
-    const data = entry.data as { chakras?: ChakraPublicRow[] };
-    body = <ChakraPublicView rows={data.chakras ?? []} summary={entry.summary} />;
-  } else if (entry.analysisType === "PLANETS") {
-    const data = entry.data as { planets?: PlanetPublicRow[] };
-    body = <PlanetsPublicView rows={data.planets ?? []} summary={entry.summary} />;
+  const publicCfg = PUBLIC_VIEW_CONFIG[entry.analysisType];
+  if (publicCfg) {
+    const data = entry.data as Record<string, ScoreRowsPublicRow[] | undefined>;
+    body = (
+      <ScoreRowsPublicView
+        sectionHeading={publicCfg.sectionHeading}
+        notesHeading={publicCfg.notesHeading}
+        rows={data[publicCfg.dataKey] ?? []}
+        summary={entry.summary}
+      />
+    );
   } else {
     body = (
       <section className="rounded-xl bg-white text-aps-text-light-bg p-6 shadow-lg">
         <p className="text-sm text-muted-foreground">
           Public view for{" "}
           <strong className="text-foreground">{typeLabel}</strong> reports
-          arrives in Phase 11.
+          arrives in a later phase.
         </p>
         <p className="mt-2 text-sm">
           You can still <a className="text-aps-gold underline" href={pdfHref}>download the PDF</a>.

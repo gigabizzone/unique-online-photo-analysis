@@ -1,6 +1,10 @@
-// 9 Planets Analysis PDF template — @react-pdf/renderer.
-// PRD §7.1-7.7 + §6.2. Structurally identical to ChakraReport.tsx with
-// per-form copy swapped (title, IMPLEMENTATION heading).
+// Generic @react-pdf template for any analysis whose body is a fixed
+// list of "score row + notes" (Chakra, Planets, Elements, Overall).
+// Variation lives in the props: reportTitle, sectionHeading,
+// notesHeading, and the rows array.
+//
+// Phase 11.4 Life Challenges and Phase 11.6 Wearables don't fit this
+// shape and use their own templates.
 
 import {
   Document,
@@ -83,21 +87,27 @@ const localStyles = StyleSheet.create({
   },
 });
 
-export interface PlanetDataRow {
+export interface ScoreRowsReportRow {
   key: string;
   label: string;
-  sanskrit: string;
+  sanskrit?: string;
   color: string;
   score: number;
   implication: string;
 }
 
-export interface PlanetsReportProps {
+export interface ScoreRowsReportProps {
+  /** e.g. "7 CHAKRA ANALYSIS REPORT" */
+  reportTitle: string;
+  /** e.g. "Chakra Energy Readings" */
+  sectionHeading: string;
+  /** Heading for the right-hand notes column: "Implication" / "Recommendation" */
+  notesHeading: string;
   customerName: string;
   customerGender: string;
   publicId: string;
   dateGenerated: string;
-  planets: PlanetDataRow[];
+  rows: ScoreRowsReportRow[];
   summary: string;
   qrDataUrl: string;
   publicReportUrl: string;
@@ -128,26 +138,29 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
   );
 }
 
-export function PlanetsReport({
+export function ScoreRowsReport({
+  reportTitle,
+  sectionHeading,
+  notesHeading,
   customerName,
   customerGender,
   publicId,
   dateGenerated,
-  planets,
+  rows,
   summary,
   qrDataUrl,
   publicReportUrl,
   logoSrc,
-}: PlanetsReportProps) {
+}: ScoreRowsReportProps) {
   return (
     <Document
-      title={`9 Planets Analysis ${publicId}`}
+      title={`${reportTitle} ${publicId}`}
       author="Aura Photo Science"
-      subject="9 Planets Analysis Report"
+      subject={reportTitle}
     >
       <Page size="A4" style={baseStyles.page}>
         <ReportHeader
-          reportTitle="9 PLANETS ANALYSIS REPORT"
+          reportTitle={reportTitle}
           customerName={customerName}
           customerGender={customerGender}
           dateGenerated={dateGenerated}
@@ -155,41 +168,41 @@ export function PlanetsReport({
           logoSrc={logoSrc}
         />
 
-        <Text style={baseStyles.sectionHeading}>Planetary Energy Readings</Text>
+        <Text style={baseStyles.sectionHeading}>{sectionHeading}</Text>
 
-        {planets.map((p) => (
-          <View key={p.key} style={localStyles.row} wrap={false}>
+        {rows.map((r) => (
+          <View key={r.key} style={localStyles.row} wrap={false}>
             <View style={localStyles.rowLeft}>
               <View
-                style={[localStyles.swatch, { backgroundColor: p.color }]}
+                style={[localStyles.swatch, { backgroundColor: r.color }]}
               />
               <View>
-                <Text style={localStyles.rowName}>{p.label}</Text>
-                {p.sanskrit ? (
-                  <Text style={localStyles.rowSanskrit}>{p.sanskrit}</Text>
+                <Text style={localStyles.rowName}>{r.label}</Text>
+                {r.sanskrit ? (
+                  <Text style={localStyles.rowSanskrit}>{r.sanskrit}</Text>
                 ) : null}
               </View>
             </View>
 
             <View style={localStyles.rowCenter}>
-              <ScoreBar score={p.score} color={p.color} />
+              <ScoreBar score={r.score} color={r.color} />
               <View style={localStyles.barScale}>
                 <Text style={localStyles.barScaleLabel}>−50</Text>
                 <Text style={localStyles.barScaleLabel}>0</Text>
                 <Text style={localStyles.barScaleLabel}>+50</Text>
               </View>
               <Text style={localStyles.scoreLabel}>
-                {p.score > 0 ? "+" : ""}
-                {p.score}
+                {r.score > 0 ? "+" : ""}
+                {r.score}
               </Text>
             </View>
 
             <View style={localStyles.rowRight}>
               <Text style={localStyles.rowImplicationHeading}>
-                Recommendation
+                {notesHeading}
               </Text>
               <Text style={localStyles.rowImplicationBody}>
-                {p.implication || "—"}
+                {r.implication || "—"}
               </Text>
             </View>
           </View>

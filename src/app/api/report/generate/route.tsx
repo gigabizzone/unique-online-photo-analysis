@@ -21,8 +21,49 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateQrDataUrl } from "@/lib/qr";
 import { uploadReportPdf } from "@/lib/supabase-storage";
-import { ChakraReport, type ChakraDataRow } from "@/components/reports/ChakraReport";
-import { PlanetsReport, type PlanetDataRow } from "@/components/reports/PlanetsReport";
+import {
+  ScoreRowsReport,
+  type ScoreRowsReportRow,
+} from "@/components/reports/ScoreRowsReport";
+
+// Per-analysis-type configuration for the generic ScoreRowsReport.
+// Phase 11.4 (Life Challenges) + Phase 11.6 (Wearables) have their own
+// templates because their row shape differs.
+const SCORE_ROWS_CONFIG: Record<
+  string,
+  {
+    reportTitle: string;
+    sectionHeading: string;
+    notesHeading: string;
+    /** key inside AnalysisEntry.data where the rows array lives */
+    dataKey: string;
+  }
+> = {
+  CHAKRA: {
+    reportTitle: "7 CHAKRA ANALYSIS REPORT",
+    sectionHeading: "Chakra Energy Readings",
+    notesHeading: "Implication",
+    dataKey: "chakras",
+  },
+  PLANETS: {
+    reportTitle: "9 PLANETS ANALYSIS REPORT",
+    sectionHeading: "Planetary Energy Readings",
+    notesHeading: "Recommendation",
+    dataKey: "planets",
+  },
+  ELEMENTS: {
+    reportTitle: "ELEMENTS ANALYSIS REPORT",
+    sectionHeading: "Elemental Energy Readings",
+    notesHeading: "Implication",
+    dataKey: "elements",
+  },
+  OVERALL: {
+    reportTitle: "OVERALL ANALYSIS REPORT",
+    sectionHeading: "Overall Energy Readings",
+    notesHeading: "Implication",
+    dataKey: "overall",
+  },
+};
 
 export const runtime = "nodejs";
 
@@ -85,48 +126,35 @@ export async function POST(req: Request) {
 
     // 2. Render the per-type document
     let doc;
-    switch (entry.analysisType) {
-      case "CHAKRA": {
-        const rows = (entry.data as { chakras?: ChakraDataRow[] }).chakras ?? [];
-        doc = (
-          <ChakraReport
-            customerName={`${entry.customer.firstName} ${entry.customer.lastName}`}
-            customerGender={entry.customer.gender}
-            publicId={entry.publicId}
-            dateGenerated={formatDateGenerated(entry.createdAt)}
-            chakras={rows}
-            summary={entry.summary}
-            qrDataUrl={qrDataUrl}
-            publicReportUrl={publicReportUrl}
-            logoSrc={logoSrc ?? undefined}
-          />
-        );
-        break;
-      }
-      case "PLANETS": {
-        const rows = (entry.data as { planets?: PlanetDataRow[] }).planets ?? [];
-        doc = (
-          <PlanetsReport
-            customerName={`${entry.customer.firstName} ${entry.customer.lastName}`}
-            customerGender={entry.customer.gender}
-            publicId={entry.publicId}
-            dateGenerated={formatDateGenerated(entry.createdAt)}
-            planets={rows}
-            summary={entry.summary}
-            qrDataUrl={qrDataUrl}
-            publicReportUrl={publicReportUrl}
-            logoSrc={logoSrc ?? undefined}
-          />
-        );
-        break;
-      }
-      default:
-        return NextResponse.json(
-          {
-            error: `PDF for analysisType=${entry.analysisType} not implemented yet (Phase 11).`,
-          },
-          { status: 501 }
-        );
+    const config = SCORE_ROWS_CONFIG[entry.analysisType];
+    if (config) {
+      const data = entry.data as Record<string, ScoreRowsReportRow[] | undefined>;
+      const rows = data[config.dataKey] ?? [];
+      doc = (
+        <ScoreRowsReport
+          reportTitle={config.reportTitle}
+          sectionHeading={config.sectionHeading}
+          notesHeading={config.notesHeading}
+          customerName={`${entry.customer.firstName} ${entry.customer.lastName}`}
+          customerGender={entry.customer.gender}
+          publicId={entry.publicId}
+          dateGenerated={formatDateGenerated(entry.createdAt)}
+          rows={rows}
+          summary={entry.summary}
+          qrDataUrl={qrDataUrl}
+          publicReportUrl={publicReportUrl}
+          logoSrc={logoSrc ?? undefined}
+        />
+      );
+    } else {
+      // LIFE_CHALLENGES + WEARABLES come in Phase 11.4 + 11.6 with their own
+      // dedicated templates.
+      return NextResponse.json(
+        {
+          error: `PDF for analysisType=${entry.analysisType} not implemented yet.`,
+        },
+        { status: 501 }
+      );
     }
 
     // 3. Buffer the PDF + upload

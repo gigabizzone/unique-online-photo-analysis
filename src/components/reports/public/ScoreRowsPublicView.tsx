@@ -1,22 +1,26 @@
-// HTML mirror of the Planets PDF for the public report page.
-// Mirrors ChakraPublicView with the section heading + per-row notes
-// label swapped (Recommendation vs Implication).
+// Generic HTML mirror of ScoreRowsReport for the public report page.
+// Used by Chakra, Planets, Elements, Overall. Phase 11.4 Life Challenges
+// and Phase 11.6 Wearables have their own views (different shape).
 
 import { scoreToBarPosition } from "@/lib/score-color";
 
 const NEUTRAL_BAR = "#E5E7EB";
 
-export interface PlanetPublicRow {
+export interface ScoreRowsPublicRow {
   key: string;
   label: string;
-  sanskrit: string;
+  sanskrit?: string;
   color: string;
   score: number;
   implication: string;
 }
 
-export interface PlanetsPublicViewProps {
-  rows: PlanetPublicRow[];
+export interface ScoreRowsPublicViewProps {
+  /** e.g. "Chakra Energy Readings" */
+  sectionHeading: string;
+  /** Right-column heading: "Implication" / "Recommendation" */
+  notesHeading: string;
+  rows: ScoreRowsPublicRow[];
   summary: string;
 }
 
@@ -42,42 +46,47 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
   );
 }
 
-export function PlanetsPublicView({ rows, summary }: PlanetsPublicViewProps) {
+export function ScoreRowsPublicView({
+  sectionHeading,
+  notesHeading,
+  rows,
+  summary,
+}: ScoreRowsPublicViewProps) {
   return (
     <>
       <section className="rounded-xl bg-white text-aps-text-light-bg p-5 sm:p-7 shadow-lg">
         <h2 className="text-xs font-bold tracking-[0.18em] text-aps-gold uppercase">
-          Planetary Energy Readings
+          {sectionHeading}
         </h2>
         <div className="mt-5 space-y-5">
-          {rows.map((p) => (
+          {rows.map((r) => (
             <div
-              key={p.key}
+              key={r.key}
               className="grid grid-cols-[auto_1fr] sm:grid-cols-[180px_1fr_minmax(0,1fr)] gap-3 sm:gap-5 items-start border-b border-border/60 last:border-b-0 pb-5 last:pb-0"
             >
               <div className="flex items-center gap-3">
                 <div
                   className="h-5 w-5 rounded-full shrink-0 shadow-inner"
-                  style={{ background: p.color }}
+                  style={{ background: r.color }}
                   aria-hidden
                 />
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold">{p.label}</div>
-                  {p.sanskrit ? (
+                  <div className="text-sm font-semibold">{r.label}</div>
+                  {r.sanskrit ? (
                     <div className="text-xs italic text-muted-foreground">
-                      {p.sanskrit}
+                      {r.sanskrit}
                     </div>
                   ) : null}
                 </div>
               </div>
 
               <div className="col-span-2 sm:col-span-1 min-w-0">
-                <ScoreBar score={p.score} color={p.color} />
+                <ScoreBar score={r.score} color={r.color} />
                 <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-muted-foreground">
                   <span>−50</span>
                   <span className="text-sm font-semibold text-foreground">
-                    {p.score > 0 ? "+" : ""}
-                    {p.score}
+                    {r.score > 0 ? "+" : ""}
+                    {r.score}
                   </span>
                   <span>+50</span>
                 </div>
@@ -85,10 +94,10 @@ export function PlanetsPublicView({ rows, summary }: PlanetsPublicViewProps) {
 
               <div className="col-span-2 sm:col-span-1">
                 <div className="text-[10px] font-bold tracking-[0.18em] text-aps-gold uppercase mb-1">
-                  Recommendation
+                  {notesHeading}
                 </div>
                 <p className="text-sm leading-relaxed">
-                  {p.implication || (
+                  {r.implication || (
                     <span className="text-muted-foreground italic">—</span>
                   )}
                 </p>

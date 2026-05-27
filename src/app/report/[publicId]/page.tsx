@@ -8,7 +8,6 @@
 // which is also public and streams the bytes from Supabase Storage.
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { Download } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -215,7 +214,7 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
         {/* Body */}
         <div className="mt-6">{body}</div>
 
-        {/* Download PDF CTA */}
+        {/* Download PDF CTA — customer-facing, no admin entry point */}
         {pdfReady && (
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <a href={pdfHref} target="_blank" rel="noopener noreferrer">
@@ -224,14 +223,6 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
                 Download PDF
               </Button>
             </a>
-            <Link href="/login">
-              <Button
-                variant="outline"
-                className="border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-              >
-                Admin login
-              </Button>
-            </Link>
           </div>
         )}
 

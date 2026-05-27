@@ -21,6 +21,10 @@ import {
   ScoreRowsPublicView,
   type ScoreRowsPublicRow,
 } from "@/components/reports/public/ScoreRowsPublicView";
+import {
+  WearablesPublicView,
+  type WearableItemPublic,
+} from "@/components/reports/public/WearablesPublicView";
 
 const PUBLIC_VIEW_CONFIG: Record<
   string,
@@ -119,6 +123,18 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
         sectionHeading={publicCfg.sectionHeading}
         notesHeading={publicCfg.notesHeading}
         rows={data[publicCfg.dataKey] ?? []}
+        summary={entry.summary}
+      />
+    );
+  } else if (entry.analysisType === "WEARABLES") {
+    const data = entry.data as {
+      items?: WearableItemPublic[];
+      remarks?: string[];
+    };
+    body = (
+      <WearablesPublicView
+        items={data.items ?? []}
+        remarks={data.remarks ?? []}
         summary={entry.summary}
       />
     );

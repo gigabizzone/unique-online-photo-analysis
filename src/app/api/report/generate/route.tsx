@@ -25,6 +25,10 @@ import {
   ScoreRowsReport,
   type ScoreRowsReportRow,
 } from "@/components/reports/ScoreRowsReport";
+import {
+  WearablesReport,
+  type WearableItem,
+} from "@/components/reports/WearablesReport";
 
 // Per-analysis-type configuration for the generic ScoreRowsReport.
 // Phase 11.4 (Life Challenges) + Phase 11.6 (Wearables) have their own
@@ -152,9 +156,26 @@ export async function POST(req: Request) {
           logoSrc={logoSrc ?? undefined}
         />
       );
+    } else if (entry.analysisType === "WEARABLES") {
+      const data = entry.data as {
+        items?: WearableItem[];
+        remarks?: string[];
+      };
+      doc = (
+        <WearablesReport
+          customerName={`${entry.customer.firstName} ${entry.customer.lastName}`}
+          customerGender={entry.customer.gender}
+          publicId={entry.publicId}
+          dateGenerated={formatDateGenerated(entry.createdAt)}
+          items={data.items ?? []}
+          remarks={data.remarks ?? []}
+          summary={entry.summary}
+          qrDataUrl={qrDataUrl}
+          publicReportUrl={publicReportUrl}
+          logoSrc={logoSrc ?? undefined}
+        />
+      );
     } else {
-      // LIFE_CHALLENGES + WEARABLES come in Phase 11.4 + 11.6 with their own
-      // dedicated templates.
       return NextResponse.json(
         {
           error: `PDF for analysisType=${entry.analysisType} not implemented yet.`,

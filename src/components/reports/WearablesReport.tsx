@@ -1,0 +1,270 @@
+// Wearable Items / Money Energy PDF template — PRD §6.6 + §7.
+// Each row has TWO bars (green positive 0→+50, red negative 0→-50)
+// plus a Money Energy Impact paragraph. Below the table, a numbered
+// Remarks list of up to 5 entries (blanks skipped).
+
+import {
+  Document,
+  Page,
+  View,
+  Text,
+  StyleSheet,
+} from "@react-pdf/renderer";
+
+import { ReportHeader } from "./ReportHeader";
+import { ReportFooter } from "./ReportFooter";
+import { QRBlock } from "./QRBlock";
+import { PDF_COLORS, baseStyles } from "./report-theme";
+
+const POSITIVE_COLOR = "#2ECC71";
+const NEGATIVE_COLOR = "#E74C3C";
+
+const styles = StyleSheet.create({
+  item: {
+    marginTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: PDF_COLORS.border,
+  },
+  itemHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  numBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingTop: 3,
+  },
+  itemName: { fontSize: 11, fontWeight: "bold", color: PDF_COLORS.textDark },
+  barsRow: {
+    flexDirection: "row",
+    marginTop: 8,
+    gap: 16,
+  },
+  barCol: { flex: 1 },
+  barLabel: {
+    fontSize: 7,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  barTrack: {
+    height: 7,
+    backgroundColor: PDF_COLORS.neutralBar,
+    borderRadius: 4,
+    position: "relative",
+  },
+  barFill: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 4,
+  },
+  barScale: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 2,
+  },
+  barScaleLabel: { fontSize: 7, color: PDF_COLORS.textMuted },
+  scoreLabel: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: PDF_COLORS.textDark,
+    marginTop: 2,
+  },
+  moneyHeading: {
+    fontSize: 7,
+    fontWeight: "bold",
+    color: PDF_COLORS.gold,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginTop: 8,
+    marginBottom: 2,
+  },
+  moneyBody: {
+    fontSize: 9,
+    color: PDF_COLORS.textDark,
+    lineHeight: 1.4,
+  },
+  remarksList: {
+    paddingLeft: 4,
+  },
+  remarkRow: {
+    flexDirection: "row",
+    marginTop: 3,
+  },
+  remarkNum: {
+    width: 16,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: PDF_COLORS.gold,
+  },
+  remarkText: {
+    flex: 1,
+    fontSize: 9,
+    color: PDF_COLORS.textDark,
+    lineHeight: 1.4,
+  },
+});
+
+export interface WearableItem {
+  key: string;
+  name: string;
+  color: string;
+  positiveScore: number;
+  negativeScore: number;
+  moneyEnergy: string;
+}
+
+export interface WearablesReportProps {
+  customerName: string;
+  customerGender: string;
+  publicId: string;
+  dateGenerated: string;
+  items: WearableItem[];
+  remarks: string[];
+  summary: string;
+  qrDataUrl: string;
+  publicReportUrl: string;
+  logoSrc?: string;
+}
+
+function PositiveBar({ value }: { value: number }) {
+  const widthPct = Math.max(0, Math.min(50, value)) * 2; // 0..100
+  return (
+    <View style={styles.barTrack}>
+      <View
+        style={[
+          styles.barFill,
+          { width: `${widthPct}%`, backgroundColor: POSITIVE_COLOR, opacity: 0.85 },
+        ]}
+      />
+    </View>
+  );
+}
+
+function NegativeBar({ value }: { value: number }) {
+  // value is in -50..0 so map magnitude to width
+  const widthPct = Math.max(0, Math.min(50, Math.abs(value))) * 2; // 0..100
+  return (
+    <View style={styles.barTrack}>
+      <View
+        style={[
+          styles.barFill,
+          { width: `${widthPct}%`, backgroundColor: NEGATIVE_COLOR, opacity: 0.85 },
+        ]}
+      />
+    </View>
+  );
+}
+
+export function WearablesReport({
+  customerName,
+  customerGender,
+  publicId,
+  dateGenerated,
+  items,
+  remarks,
+  summary,
+  qrDataUrl,
+  publicReportUrl,
+  logoSrc,
+}: WearablesReportProps) {
+  const nonEmptyRemarks = remarks
+    .map((r, i) => ({ text: r.trim(), idx: i }))
+    .filter((r) => r.text.length > 0);
+
+  return (
+    <Document
+      title={`Money Energy Report ${publicId}`}
+      author="Aura Photo Science"
+      subject="Wearable Items Money Energy Analysis"
+    >
+      <Page size="A4" style={baseStyles.page}>
+        <ReportHeader
+          reportTitle="WEARABLE ITEMS / MONEY ENERGY REPORT"
+          customerName={customerName}
+          customerGender={customerGender}
+          dateGenerated={dateGenerated}
+          reportId={publicId}
+          logoSrc={logoSrc}
+        />
+
+        <Text style={baseStyles.sectionHeading}>Wearable Items</Text>
+
+        {items.map((it, i) => (
+          <View key={it.key} style={styles.item} wrap={false}>
+            <View style={styles.itemHeader}>
+              <Text
+                style={[
+                  styles.numBadge,
+                  { backgroundColor: it.color },
+                ]}
+              >
+                {i + 1}
+              </Text>
+              <Text style={styles.itemName}>{it.name}</Text>
+            </View>
+
+            <View style={styles.barsRow}>
+              <View style={styles.barCol}>
+                <Text style={[styles.barLabel, { color: POSITIVE_COLOR }]}>
+                  Positive Energy
+                </Text>
+                <PositiveBar value={it.positiveScore} />
+                <View style={styles.barScale}>
+                  <Text style={styles.barScaleLabel}>0</Text>
+                  <Text style={styles.barScaleLabel}>+50</Text>
+                </View>
+                <Text style={styles.scoreLabel}>+{it.positiveScore}</Text>
+              </View>
+              <View style={styles.barCol}>
+                <Text style={[styles.barLabel, { color: NEGATIVE_COLOR }]}>
+                  Negative Energy
+                </Text>
+                <NegativeBar value={it.negativeScore} />
+                <View style={styles.barScale}>
+                  <Text style={styles.barScaleLabel}>0</Text>
+                  <Text style={styles.barScaleLabel}>−50</Text>
+                </View>
+                <Text style={styles.scoreLabel}>{it.negativeScore}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.moneyHeading}>Money Energy Impact</Text>
+            <Text style={styles.moneyBody}>{it.moneyEnergy || "—"}</Text>
+          </View>
+        ))}
+
+        {nonEmptyRemarks.length > 0 ? (
+          <>
+            <Text style={baseStyles.sectionHeading}>
+              Remarks / Recommendations
+            </Text>
+            <View style={styles.remarksList}>
+              {nonEmptyRemarks.map(({ text, idx }) => (
+                <View key={idx} style={styles.remarkRow} wrap={false}>
+                  <Text style={styles.remarkNum}>{idx + 1}.</Text>
+                  <Text style={styles.remarkText}>{text}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        <Text style={baseStyles.sectionHeading}>Summary</Text>
+        <View style={baseStyles.summaryCard}>
+          <Text style={baseStyles.summaryText}>{summary}</Text>
+        </View>
+
+        <QRBlock qrDataUrl={qrDataUrl} publicReportUrl={publicReportUrl} />
+
+        <ReportFooter />
+      </Page>
+    </Document>
+  );
+}

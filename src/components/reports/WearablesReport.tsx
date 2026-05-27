@@ -131,6 +131,11 @@ export interface WearablesReportProps {
   qrDataUrl: string;
   publicReportUrl: string;
   logoSrc?: string;
+  /** Optional editable branding overrides (Phase 12.3). */
+  appName?: string;
+  sloganEn?: string;
+  sloganHi?: string;
+  tagline?: string;
 }
 
 function PositiveBar({ value }: { value: number }) {
@@ -173,6 +178,10 @@ export function WearablesReport({
   qrDataUrl,
   publicReportUrl,
   logoSrc,
+  appName,
+  sloganEn,
+  sloganHi,
+  tagline,
 }: WearablesReportProps) {
   const nonEmptyRemarks = remarks
     .map((r, i) => ({ text: r.trim(), idx: i }))
@@ -192,6 +201,10 @@ export function WearablesReport({
           dateGenerated={dateGenerated}
           reportId={publicId}
           logoSrc={logoSrc}
+          appName={appName}
+          sloganEn={sloganEn}
+          sloganHi={sloganHi}
+          tagline={tagline}
         />
 
         <Text style={baseStyles.sectionHeading}>Wearable Items</Text>

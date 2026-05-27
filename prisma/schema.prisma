@@ -81,3 +81,15 @@ model Counter {
   value     Int      @default(0)
   updatedAt DateTime @updatedAt
 }
+
+// PRD §10.3 — admin-editable branding strings. Single-row pattern:
+// id is hard-coded to "main", read/written via upsert. If the row is
+// missing, getBranding() falls back to the static defaults in
+// src/constants/branding.ts.
+model Settings {
+  id        String   @id @default("main")
+  sloganEn  String
+  sloganHi  String
+  tagline   String
+  updatedAt DateTime @updatedAt
+}

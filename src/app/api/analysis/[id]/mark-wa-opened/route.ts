@@ -43,7 +43,7 @@ export async function POST(
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
   const publicReportUrl = `${appUrl.replace(/\/$/, "")}/report/${entry.publicId}`;
 
-  const waUrl = buildWhatsAppLink({
+  const waUrl = await buildWhatsAppLink({
     firstName: entry.customer.firstName,
     whatsapp: entry.customer.whatsapp,
     analysisType: entry.analysisType,

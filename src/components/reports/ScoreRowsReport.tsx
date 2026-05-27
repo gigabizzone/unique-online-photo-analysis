@@ -112,6 +112,11 @@ export interface ScoreRowsReportProps {
   qrDataUrl: string;
   publicReportUrl: string;
   logoSrc?: string;
+  /** Optional editable branding overrides (Phase 12.3). */
+  appName?: string;
+  sloganEn?: string;
+  sloganHi?: string;
+  tagline?: string;
 }
 
 function ScoreBar({ score, color }: { score: number; color: string }) {
@@ -151,6 +156,10 @@ export function ScoreRowsReport({
   qrDataUrl,
   publicReportUrl,
   logoSrc,
+  appName,
+  sloganEn,
+  sloganHi,
+  tagline,
 }: ScoreRowsReportProps) {
   return (
     <Document
@@ -166,6 +175,10 @@ export function ScoreRowsReport({
           dateGenerated={dateGenerated}
           reportId={publicId}
           logoSrc={logoSrc}
+          appName={appName}
+          sloganEn={sloganEn}
+          sloganHi={sloganHi}
+          tagline={tagline}
         />
 
         <Text style={baseStyles.sectionHeading}>{sectionHeading}</Text>

@@ -8,7 +8,8 @@
 // The customer's whatsapp number is stored E.164 (e.g. "+919812345678"),
 // but wa.me wants digits only.
 
-import { BRAND, SOCIAL_LINKS } from "@/constants/branding";
+import { SOCIAL_LINKS } from "@/constants/branding";
+import { getBranding } from "@/lib/branding";
 
 const ANALYSIS_TYPE_LABEL: Record<string, string> = {
   CHAKRA: "7 Chakra Analysis",
@@ -34,20 +35,26 @@ export interface WhatsAppLinkInput {
 
 /**
  * Build the wa.me URL with the pre-filled message from PRD §9.3.
+ * Async because it reads admin-editable slogans+tagline from the
+ * Settings table (Phase 12.3) — server-only callers must await it.
  */
-export function buildWhatsAppLink(input: WhatsAppLinkInput): string {
+export async function buildWhatsAppLink(
+  input: WhatsAppLinkInput
+): Promise<string> {
   // wa.me only accepts digits. Strip "+", spaces, dashes, parentheses.
   const phone = input.whatsapp.replace(/[^0-9]/g, "");
 
   const typeLabel =
     ANALYSIS_TYPE_LABEL[input.analysisType] ?? input.analysisType;
 
+  const branding = await getBranding();
+
   // Note: this is plain text — WhatsApp doesn't render markdown. Emoji
   // are fine. URL gets percent-encoded by encodeURIComponent.
   const message = [
     `Namaste ${input.firstName} 🙏`,
     ``,
-    `Your ${typeLabel} Report from ${BRAND.brand} is ready.`,
+    `Your ${typeLabel} Report from ${branding.brand} is ready.`,
     ``,
     `📥 View / Download your report here:`,
     input.publicReportUrl,
@@ -56,10 +63,10 @@ export function buildWhatsAppLink(input: WhatsAppLinkInput): string {
     `📘 Facebook: ${socialHandle("Facebook")}`,
     `📸 Instagram: ${socialHandle("Instagram")}`,
     ``,
-    `"${BRAND.sloganEn}"`,
-    BRAND.sloganHi,
+    `"${branding.sloganEn}"`,
+    branding.sloganHi,
     ``,
-    BRAND.tagline,
+    branding.tagline,
   ].join("\n");
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;

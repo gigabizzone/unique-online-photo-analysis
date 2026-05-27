@@ -13,6 +13,12 @@ export interface ReportHeaderProps {
   dateGenerated: string;           // "24 May 2026" or "Sun, 24 May 2026"
   reportId: string;                // publicId e.g. "APS-2026-CHK-00042"
   logoSrc?: string;                // data URL or file path; gracefully omitted if absent
+  // Editable branding overrides — fall back to the static defaults if omitted
+  // so this stays a pure sync render-time component for @react-pdf.
+  appName?: string;
+  sloganEn?: string;
+  sloganHi?: string;
+  tagline?: string;
 }
 
 export function ReportHeader({
@@ -22,6 +28,10 @@ export function ReportHeader({
   dateGenerated,
   reportId,
   logoSrc,
+  appName = BRAND.appName,
+  sloganEn = BRAND.sloganEn,
+  sloganHi = BRAND.sloganHi,
+  tagline = BRAND.tagline,
 }: ReportHeaderProps) {
   return (
     <View>
@@ -34,11 +44,11 @@ export function ReportHeader({
             ॐ
           </Text>
         )}
-        <Text style={baseStyles.appName}>{BRAND.appName}</Text>
-        <Text style={baseStyles.sloganEn}>{BRAND.sloganEn}</Text>
-        <Text style={baseStyles.sloganHi}>{BRAND.sloganHi}</Text>
+        <Text style={baseStyles.appName}>{appName}</Text>
+        <Text style={baseStyles.sloganEn}>{sloganEn}</Text>
+        <Text style={baseStyles.sloganHi}>{sloganHi}</Text>
         <Text style={baseStyles.reportTitle}>{reportTitle}</Text>
-        <Text style={baseStyles.tagline}>{BRAND.tagline}</Text>
+        <Text style={baseStyles.tagline}>{tagline}</Text>
       </View>
 
       {/* Customer info strip */}

@@ -204,7 +204,17 @@ export default function LifeChallengesPage() {
             Search for an existing customer or fill in the form below.
           </p>
         </div>
-        <CustomerSearch onSelect={(c: CustomerHit) => setPreset(c)} />
+        <CustomerSearch
+          onSelect={(c: CustomerHit) =>
+            setPreset({
+              firstName: c.firstName,
+              lastName: c.lastName,
+              gender: c.gender as ProfileFormData["gender"],
+              email: c.email,
+              whatsapp: c.whatsapp,
+            })
+          }
+        />
         <ProfileSection
           preset={preset}
           onSubmit={handleProfileSubmit}

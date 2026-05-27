@@ -21,6 +21,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateQrDataUrl } from "@/lib/qr";
 import { uploadReportPdf } from "@/lib/supabase-storage";
+import { getBranding } from "@/lib/branding";
 import {
   ScoreRowsReport,
   type ScoreRowsReportRow,
@@ -128,10 +129,11 @@ export async function POST(req: Request) {
   const publicReportUrl = `${appUrl.replace(/\/$/, "")}/report/${entry.publicId}`;
 
   try {
-    // 1. QR + logo are common to every report type
-    const [qrDataUrl, logoSrc] = await Promise.all([
+    // 1. QR + logo + branding are common to every report type
+    const [qrDataUrl, logoSrc, branding] = await Promise.all([
       generateQrDataUrl(publicReportUrl),
       loadLogoDataUrl(),
+      getBranding(),
     ]);
 
     // 2. Render the per-type document
@@ -154,6 +156,10 @@ export async function POST(req: Request) {
           qrDataUrl={qrDataUrl}
           publicReportUrl={publicReportUrl}
           logoSrc={logoSrc ?? undefined}
+          appName={branding.appName}
+          sloganEn={branding.sloganEn}
+          sloganHi={branding.sloganHi}
+          tagline={branding.tagline}
         />
       );
     } else if (entry.analysisType === "WEARABLES") {
@@ -173,6 +179,10 @@ export async function POST(req: Request) {
           qrDataUrl={qrDataUrl}
           publicReportUrl={publicReportUrl}
           logoSrc={logoSrc ?? undefined}
+          appName={branding.appName}
+          sloganEn={branding.sloganEn}
+          sloganHi={branding.sloganHi}
+          tagline={branding.tagline}
         />
       );
     } else {

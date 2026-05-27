@@ -17,7 +17,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { BRAND, ANALYSIS_TYPES } from "@/constants/branding";
+import { ANALYSIS_TYPES } from "@/constants/branding";
+import { getBranding } from "@/lib/branding";
 import { AuraLogo } from "@/components/AuraLogo";
 import { cn } from "@/lib/utils";
 
@@ -41,8 +42,9 @@ function formatDate(d: Date): string {
   });
 }
 
-export default function DashboardHome() {
+export default async function DashboardHome() {
   const today = formatDate(new Date());
+  const branding = await getBranding();
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
@@ -52,16 +54,16 @@ export default function DashboardHome() {
             <AuraLogo size={240} className="shadow-2xl" />
           </div>
           <h1 className="mt-6 text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white">
-            {BRAND.appName}
+            {branding.appName}
           </h1>
           <p className="mt-3 text-base sm:text-lg text-white/80 italic">
-            {BRAND.sloganEn}
+            {branding.sloganEn}
           </p>
           <p className="mt-1 text-sm sm:text-base text-white/60">
-            {BRAND.sloganHi}
+            {branding.sloganHi}
           </p>
           <p className="mt-5 text-base sm:text-lg font-semibold tracking-wide text-aps-gold uppercase">
-            {BRAND.tagline}
+            {branding.tagline}
           </p>
           <p className="mt-3 text-xs sm:text-sm text-white/50">{today}</p>
         </section>

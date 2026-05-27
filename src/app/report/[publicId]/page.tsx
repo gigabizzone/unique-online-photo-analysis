@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 
 import { prisma } from "@/lib/db";
 import { BRAND } from "@/constants/branding";
+import { getBranding } from "@/lib/branding";
 import { AuraLogo } from "@/components/AuraLogo";
 import { SocialFooter } from "@/components/SocialFooter";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,10 @@ function formatDate(d: Date): string {
 }
 
 export default async function PublicReportPage({ params }: ReportPageProps) {
-  const entry = await loadEntry(params.publicId);
+  const [entry, branding] = await Promise.all([
+    loadEntry(params.publicId),
+    getBranding(),
+  ]);
   if (!entry) notFound();
 
   const typeLabel =
@@ -162,12 +166,12 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
             <AuraLogo size={120} />
           </div>
           <h1 className="mt-5 text-2xl sm:text-3xl font-semibold tracking-tight">
-            {BRAND.appName}
+            {branding.appName}
           </h1>
-          <p className="mt-2 text-sm italic text-white/75">{BRAND.sloganEn}</p>
-          <p className="mt-0.5 text-sm text-white/55">{BRAND.sloganHi}</p>
+          <p className="mt-2 text-sm italic text-white/75">{branding.sloganEn}</p>
+          <p className="mt-0.5 text-sm text-white/55">{branding.sloganHi}</p>
           <p className="mt-4 text-sm font-semibold tracking-wide text-aps-gold uppercase">
-            {BRAND.tagline}
+            {branding.tagline}
           </p>
         </header>
 

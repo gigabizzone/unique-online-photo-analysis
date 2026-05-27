@@ -13,7 +13,8 @@ import nodemailer, { type Transporter } from "nodemailer";
 
 import { prisma } from "@/lib/db";
 import { downloadReportPdf } from "@/lib/supabase-storage";
-import { BRAND, SOCIAL_LINKS } from "@/constants/branding";
+import { SOCIAL_LINKS } from "@/constants/branding";
+import { getBranding } from "@/lib/branding";
 
 let _transporter: Transporter | null = null;
 
@@ -60,10 +61,11 @@ const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 export async function sendTestEmail(toEmail?: string): Promise<void> {
   const transporter = getTransporter();
   const to = toEmail ?? ADMIN_EMAIL;
+  const branding = await getBranding();
   await transporter.sendMail({
     from: FROM,
     to,
-    subject: `[Test] ${BRAND.brand} SMTP check`,
+    subject: `[Test] ${branding.brand} SMTP check`,
     text:
       `If you can read this, Hostinger SMTP is wired up correctly.\n\n` +
       `Sent at ${new Date().toISOString()} from ${APP_URL}.`,
@@ -84,6 +86,10 @@ function brandedHtml(opts: {
   bodyHtml: string;
   reportId: string;
   publicReportUrl: string;
+  appName: string;
+  sloganEn: string;
+  tagline: string;
+  legalDisclaimer: string;
 }): string {
   const socialBlock = SOCIAL_LINKS.map(
     (s) =>
@@ -96,9 +102,9 @@ function brandedHtml(opts: {
       <tr><td align="center">
         <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
           <tr><td style="padding:32px 32px 16px 32px;text-align:center;">
-            <div style="font-size:22px;font-weight:700;color:#1F1B2E;letter-spacing:0.4px;">${BRAND.appName}</div>
-            <div style="font-size:12px;color:#6B6680;font-style:italic;margin-top:4px;">${BRAND.sloganEn}</div>
-            <div style="font-size:11px;color:#D4A24C;font-weight:700;letter-spacing:1px;margin-top:14px;">${BRAND.tagline}</div>
+            <div style="font-size:22px;font-weight:700;color:#1F1B2E;letter-spacing:0.4px;">${opts.appName}</div>
+            <div style="font-size:12px;color:#6B6680;font-style:italic;margin-top:4px;">${opts.sloganEn}</div>
+            <div style="font-size:11px;color:#D4A24C;font-weight:700;letter-spacing:1px;margin-top:14px;">${opts.tagline}</div>
           </td></tr>
           <tr><td style="padding:0 32px;">
             <p style="font-size:14px;color:#1F1B2E;line-height:1.5;">${opts.greeting}</p>
@@ -114,7 +120,7 @@ function brandedHtml(opts: {
           <tr><td style="padding:24px 32px 32px 32px;border-top:1px solid #E5E1EC;text-align:center;">
             <div style="font-size:10px;color:#6B6680;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Connect with us</div>
             <div style="font-size:12px;">${socialBlock}</div>
-            <div style="font-size:10px;color:#6B6680;margin-top:16px;font-style:italic;">${BRAND.legalDisclaimer}</div>
+            <div style="font-size:10px;color:#6B6680;margin-top:16px;font-style:italic;">${opts.legalDisclaimer}</div>
           </td></tr>
         </table>
       </td></tr>
@@ -168,22 +174,27 @@ export async function sendReportEmail(
   const filenameLastName = entry.customer.lastName.replace(/[^A-Za-z0-9_-]/g, "");
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const filename = `APS_${entry.publicId}_${filenameLastName}_${ymd}.pdf`;
+  const branding = await getBranding();
 
   // ── 1. Customer-facing email
   const customerHtml = brandedHtml({
     greeting: `Namaste ${entry.customer.firstName},`,
     bodyHtml: `<p style="font-size:14px;color:#1F1B2E;line-height:1.5;">
-      Your <strong>${typeLabel}</strong> from ${BRAND.brand} is ready.
+      Your <strong>${typeLabel}</strong> from ${branding.brand} is ready.
       The PDF is attached to this email.
     </p>`,
     reportId: entry.publicId,
     publicReportUrl,
+    appName: branding.appName,
+    sloganEn: branding.sloganEn,
+    tagline: branding.tagline,
+    legalDisclaimer: branding.legalDisclaimer,
   });
 
   await transporter.sendMail({
     from: FROM,
     to: entry.customer.email,
-    subject: `Your ${typeLabel} Report — ${BRAND.brand}`,
+    subject: `Your ${typeLabel} Report — ${branding.brand}`,
     html: customerHtml,
     attachments: [
       {

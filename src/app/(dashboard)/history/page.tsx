@@ -4,8 +4,9 @@
 // (type, date range, customer search), per-row actions (View / Download
 // PDF / Resend Email / Reopen WhatsApp / Delete), and CSV export.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Download,
@@ -18,6 +19,7 @@ import {
   ChevronRight,
   Loader2,
   FileText,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -65,7 +67,10 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function HistoryPage() {
+function HistoryPageInner() {
+  const searchParams = useSearchParams();
+  const customerId = searchParams.get("customer") ?? "";
+
   const [page, setPage] = useState(1);
   const [pageSize] = useState(25);
   const [type, setType] = useState<string>("");
@@ -96,10 +101,11 @@ export default function HistoryPage() {
     if (from) p.set("from", from);
     if (to) p.set("to", `${to}T23:59:59.999Z`);
     if (q.length >= 2) p.set("q", q);
+    if (customerId) p.set("customer", customerId);
     p.set("page", String(page));
     p.set("pageSize", String(pageSize));
     return p.toString();
-  }, [type, from, to, q, page, pageSize]);
+  }, [type, from, to, q, customerId, page, pageSize]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -229,6 +235,21 @@ export default function HistoryPage() {
           Dashboard
         </Link>
       </header>
+
+      {customerId && (
+        <div className="rounded-md border border-aps-gold/40 bg-aps-gold/10 px-3 py-2 text-sm text-white flex items-center justify-between gap-3">
+          <span>
+            Filtering by a single customer (id <code className="font-mono text-xs">{customerId}</code>).
+          </span>
+          <Link
+            href="/history"
+            className="inline-flex items-center gap-1 text-aps-gold hover:underline"
+          >
+            <X className="h-4 w-4" />
+            Clear customer filter
+          </Link>
+        </div>
+      )}
 
       {/* Filter bar */}
       <section className="rounded-xl bg-white text-foreground p-4 sm:p-5 shadow-sm">
@@ -500,5 +521,24 @@ export default function HistoryPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function HistoryPage() {
+  // useSearchParams() requires a Suspense boundary in the server-rendered
+  // tree (Next.js 14 App Router rule).
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto max-w-7xl px-4 py-10">
+          <div className="flex items-center gap-2 text-sm text-white/60">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading history…
+          </div>
+        </main>
+      }
+    >
+      <HistoryPageInner />
+    </Suspense>
   );
 }

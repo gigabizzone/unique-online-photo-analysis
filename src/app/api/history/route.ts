@@ -45,6 +45,7 @@ export async function GET(req: Request) {
   const from = parseDate(url.searchParams.get("from"));
   const to = parseDate(url.searchParams.get("to"));
   const q = (url.searchParams.get("q") ?? "").trim();
+  const customerId = url.searchParams.get("customer");
 
   const pageParam = url.searchParams.get("page");
   const pageSizeParam = url.searchParams.get("pageSize");
@@ -60,6 +61,10 @@ export async function GET(req: Request) {
 
   if (type && VALID_TYPES.has(type)) {
     where.analysisType = type as Prisma.EnumAnalysisTypeFilter["equals"];
+  }
+
+  if (customerId) {
+    where.customerId = customerId;
   }
 
   if (from || to) {

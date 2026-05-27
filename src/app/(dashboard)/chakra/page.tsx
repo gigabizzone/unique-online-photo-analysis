@@ -12,7 +12,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, ArrowLeft, Loader2, Download, Mail } from "lucide-react";
+import {
+  CheckCircle2,
+  ArrowLeft,
+  Loader2,
+  Download,
+  Mail,
+  MessageCircle,
+} from "lucide-react";
 
 import {
   ProfileSection,
@@ -46,6 +53,12 @@ type EmailState =
   | { status: "sent"; customer: string; admin: string }
   | { status: "error"; message: string };
 
+type WhatsAppState =
+  | { status: "idle" }
+  | { status: "opening" }
+  | { status: "opened" }
+  | { status: "error"; message: string };
+
 type Phase = "profile" | "entry" | "saved";
 
 export default function ChakraPage() {
@@ -61,6 +74,7 @@ export default function ChakraPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<SaveResult | null>(null);
   const [emailState, setEmailState] = useState<EmailState>({ status: "idle" });
+  const [waState, setWaState] = useState<WhatsAppState>({ status: "idle" });
 
   function handleProfileSubmit(data: ProfileFormData) {
     setProfile(data);
@@ -146,7 +160,37 @@ export default function ChakraPage() {
     setSaved(null);
     setError(null);
     setEmailState({ status: "idle" });
+    setWaState({ status: "idle" });
     setPhase("profile");
+  }
+
+  async function handleSendWhatsApp() {
+    if (!saved) return;
+    setWaState({ status: "opening" });
+    try {
+      const res = await fetch(
+        `/api/analysis/${saved.id}/mark-wa-opened`,
+        { method: "POST" }
+      );
+      const body = await res.json();
+      if (!res.ok || !body.waUrl) {
+        setWaState({
+          status: "error",
+          message: body.error ?? `HTTP ${res.status}`,
+        });
+        return;
+      }
+      // Open WhatsApp Web (desktop) or WhatsApp app (mobile) in a new tab.
+      // The admin sees the chat pre-filled with the customer's number +
+      // the templated message; they click Send inside WhatsApp itself.
+      window.open(body.waUrl, "_blank", "noopener,noreferrer");
+      setWaState({ status: "opened" });
+    } catch (e) {
+      setWaState({
+        status: "error",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+    }
   }
 
   async function handleSendEmail() {
@@ -210,8 +254,8 @@ export default function ChakraPage() {
           )}
 
           <div className="mt-6 rounded-md border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-            WhatsApp share arrives in Phase 9. For now you can download the
-            PDF and email it to the customer + admin.
+            Download the PDF, email it to the customer + admin, or open
+            WhatsApp Web with the pre-filled message + report link.
           </div>
 
           {emailState.status === "sent" && (
@@ -219,7 +263,7 @@ export default function ChakraPage() {
               role="status"
               className="mt-4 rounded-md border border-emerald-400/40 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
             >
-              ✓ Sent to <strong>{emailState.customer}</strong> and{" "}
+              ✓ Email sent to <strong>{emailState.customer}</strong> and{" "}
               <strong>{emailState.admin}</strong>.
             </div>
           )}
@@ -229,6 +273,24 @@ export default function ChakraPage() {
               className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive break-all"
             >
               Email failed: {emailState.message}
+            </div>
+          )}
+
+          {waState.status === "opened" && (
+            <div
+              role="status"
+              className="mt-4 rounded-md border border-emerald-400/40 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+            >
+              ✓ WhatsApp opened in a new tab. Attach the PDF file inside
+              WhatsApp and click <strong>Send</strong>.
+            </div>
+          )}
+          {waState.status === "error" && (
+            <div
+              role="alert"
+              className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive break-all"
+            >
+              WhatsApp failed: {waState.message}
             </div>
           )}
 
@@ -272,6 +334,29 @@ export default function ChakraPage() {
                 )}
               </Button>
             ) : null}
+            <Button
+              variant="outline"
+              onClick={handleSendWhatsApp}
+              disabled={waState.status === "opening"}
+              className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+            >
+              {waState.status === "opening" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Opening WhatsApp…
+                </>
+              ) : waState.status === "opened" ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                  WhatsApp opened
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Send via WhatsApp
+                </>
+              )}
+            </Button>
             <Button onClick={startAnother} variant="ghost">
               Enter another chakra report
             </Button>

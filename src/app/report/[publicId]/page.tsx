@@ -46,6 +46,11 @@ const PUBLIC_VIEW_CONFIG: Record<
     notesHeading: "Implication",
     dataKey: "overall",
   },
+  LIFE_CHALLENGES: {
+    sectionHeading: "Life Challenges",
+    notesHeading: "Implication / Recommendation",
+    dataKey: "challenges",
+  },
 };
 
 interface ReportPageProps {

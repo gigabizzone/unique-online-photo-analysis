@@ -63,6 +63,12 @@ const SCORE_ROWS_CONFIG: Record<
     notesHeading: "Implication",
     dataKey: "overall",
   },
+  LIFE_CHALLENGES: {
+    reportTitle: "LIFE CHALLENGES ANALYSIS REPORT",
+    sectionHeading: "Life Challenges",
+    notesHeading: "Implication / Recommendation",
+    dataKey: "challenges",
+  },
 };
 
 export const runtime = "nodejs";

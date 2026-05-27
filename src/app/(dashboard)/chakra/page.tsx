@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, ArrowLeft, Loader2, Download } from "lucide-react";
+import { CheckCircle2, ArrowLeft, Loader2, Download, Mail } from "lucide-react";
 
 import {
   ProfileSection,
@@ -40,6 +40,12 @@ interface SaveResult {
   pdfStorageUrl?: string | null;
 }
 
+type EmailState =
+  | { status: "idle" }
+  | { status: "sending" }
+  | { status: "sent"; customer: string; admin: string }
+  | { status: "error"; message: string };
+
 type Phase = "profile" | "entry" | "saved";
 
 export default function ChakraPage() {
@@ -54,6 +60,7 @@ export default function ChakraPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<SaveResult | null>(null);
+  const [emailState, setEmailState] = useState<EmailState>({ status: "idle" });
 
   function handleProfileSubmit(data: ProfileFormData) {
     setProfile(data);
@@ -138,7 +145,38 @@ export default function ChakraPage() {
     setSummary("");
     setSaved(null);
     setError(null);
+    setEmailState({ status: "idle" });
     setPhase("profile");
+  }
+
+  async function handleSendEmail() {
+    if (!saved) return;
+    setEmailState({ status: "sending" });
+    try {
+      const res = await fetch("/api/report/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entryId: saved.id }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setEmailState({
+          status: "error",
+          message: body.error ?? `HTTP ${res.status}`,
+        });
+        return;
+      }
+      setEmailState({
+        status: "sent",
+        customer: body.customer,
+        admin: body.admin,
+      });
+    } catch (e) {
+      setEmailState({
+        status: "error",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -172,9 +210,27 @@ export default function ChakraPage() {
           )}
 
           <div className="mt-6 rounded-md border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-            Email and WhatsApp actions arrive in Phase 8 + Phase 9. For now you
-            can download the PDF or view it in Supabase Storage.
+            WhatsApp share arrives in Phase 9. For now you can download the
+            PDF and email it to the customer + admin.
           </div>
+
+          {emailState.status === "sent" && (
+            <div
+              role="status"
+              className="mt-4 rounded-md border border-emerald-400/40 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+            >
+              ✓ Sent to <strong>{emailState.customer}</strong> and{" "}
+              <strong>{emailState.admin}</strong>.
+            </div>
+          )}
+          {emailState.status === "error" && (
+            <div
+              role="alert"
+              className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive break-all"
+            >
+              Email failed: {emailState.message}
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap gap-2">
             {saved.pdfStorageUrl ? (
@@ -189,7 +245,34 @@ export default function ChakraPage() {
                 </Button>
               </a>
             ) : null}
-            <Button onClick={startAnother} variant="outline">
+            {saved.pdfStorageUrl ? (
+              <Button
+                variant="outline"
+                onClick={handleSendEmail}
+                disabled={
+                  emailState.status === "sending" ||
+                  emailState.status === "sent"
+                }
+              >
+                {emailState.status === "sending" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Sending email…
+                  </>
+                ) : emailState.status === "sent" ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                    Email sent
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Email
+                  </>
+                )}
+              </Button>
+            ) : null}
+            <Button onClick={startAnother} variant="ghost">
               Enter another chakra report
             </Button>
             <Link href="/">

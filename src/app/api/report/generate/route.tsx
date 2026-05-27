@@ -22,6 +22,7 @@ import { prisma } from "@/lib/db";
 import { generateQrDataUrl } from "@/lib/qr";
 import { uploadReportPdf } from "@/lib/supabase-storage";
 import { ChakraReport, type ChakraDataRow } from "@/components/reports/ChakraReport";
+import { PlanetsReport, type PlanetDataRow } from "@/components/reports/PlanetsReport";
 
 export const runtime = "nodejs";
 
@@ -94,6 +95,23 @@ export async function POST(req: Request) {
             publicId={entry.publicId}
             dateGenerated={formatDateGenerated(entry.createdAt)}
             chakras={rows}
+            summary={entry.summary}
+            qrDataUrl={qrDataUrl}
+            publicReportUrl={publicReportUrl}
+            logoSrc={logoSrc ?? undefined}
+          />
+        );
+        break;
+      }
+      case "PLANETS": {
+        const rows = (entry.data as { planets?: PlanetDataRow[] }).planets ?? [];
+        doc = (
+          <PlanetsReport
+            customerName={`${entry.customer.firstName} ${entry.customer.lastName}`}
+            customerGender={entry.customer.gender}
+            publicId={entry.publicId}
+            dateGenerated={formatDateGenerated(entry.createdAt)}
+            planets={rows}
             summary={entry.summary}
             qrDataUrl={qrDataUrl}
             publicReportUrl={publicReportUrl}

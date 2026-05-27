@@ -21,6 +21,10 @@ import {
   ChakraPublicView,
   type ChakraPublicRow,
 } from "@/components/reports/public/ChakraPublicView";
+import {
+  PlanetsPublicView,
+  type PlanetPublicRow,
+} from "@/components/reports/public/PlanetsPublicView";
 
 interface ReportPageProps {
   params: { publicId: string };
@@ -82,6 +86,9 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
   if (entry.analysisType === "CHAKRA") {
     const data = entry.data as { chakras?: ChakraPublicRow[] };
     body = <ChakraPublicView rows={data.chakras ?? []} summary={entry.summary} />;
+  } else if (entry.analysisType === "PLANETS") {
+    const data = entry.data as { planets?: PlanetPublicRow[] };
+    body = <PlanetsPublicView rows={data.planets ?? []} summary={entry.summary} />;
   } else {
     body = (
       <section className="rounded-xl bg-white text-aps-text-light-bg p-6 shadow-lg">

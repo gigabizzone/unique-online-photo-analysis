@@ -20,6 +20,10 @@ export interface ColoredSliderProps {
   onChange: (next: number) => void;
   disabled?: boolean;
   className?: string;
+  /** When set, NEGATIVE values render in this colour (bar, thumb + reading)
+   *  instead of `color` — e.g. red — so a deficit reads as something to act
+   *  on. Positive values keep `color`. Omit to colour by `color` regardless. */
+  negativeColor?: string;
   /** input width in chars, defaults to 4 */
   inputWidth?: number;
 }
@@ -39,8 +43,11 @@ export function ColoredSlider({
   onChange,
   disabled = false,
   className,
+  negativeColor,
   inputWidth = 4,
 }: ColoredSliderProps) {
+  // Negative values take `negativeColor` (e.g. red) when provided.
+  const accent = negativeColor && value < 0 ? negativeColor : color;
   // Local state holds the raw text the user types so they can pass through
   // intermediate states ("-", "" ) without snapping. We commit a clamped
   // numeric value to the parent on every valid keystroke.
@@ -88,7 +95,7 @@ export function ColoredSlider({
       )}
       <div className="flex items-center gap-3">
         <Slider
-          accentColor={color}
+          accentColor={accent}
           min={min}
           max={max}
           step={step}
@@ -115,7 +122,13 @@ export function ColoredSlider({
             "focus:outline-none focus:ring-2 focus:ring-ring",
             "disabled:opacity-50"
           )}
-          style={{ width: `${inputWidth + 2}ch` }}
+          // +4ch (not +2) leaves room for the number-spinner arrows so the
+          // last digit of values like "50" / "-50" isn't clipped.
+          // Negative readings turn red (when negativeColor is set).
+          style={{
+            width: `${inputWidth + 4}ch`,
+            color: negativeColor && value < 0 ? negativeColor : undefined,
+          }}
         />
       </div>
     </div>

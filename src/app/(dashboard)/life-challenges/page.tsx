@@ -279,6 +279,7 @@ export default function LifeChallengesPage() {
                     />
                     <ColoredSlider
                       color={color}
+                      negativeColor="#E74C3C"
                       value={row.score}
                       onChange={(n) => updateRow(i, "score", n)}
                     />

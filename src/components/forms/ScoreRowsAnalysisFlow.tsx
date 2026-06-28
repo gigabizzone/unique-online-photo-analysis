@@ -40,6 +40,10 @@ export interface ScoreRowDef {
   label: string;
   sanskrit?: string;
   color: string;
+  /** Optional per-row slider lower bound (defaults to -50). */
+  min?: number;
+  /** Optional per-row slider upper bound (defaults to +50). */
+  max?: number;
 }
 
 export interface ScoreRowsFlowConfig {
@@ -291,6 +295,16 @@ export function ScoreRowsAnalysisFlow({
               <div className="space-y-2">
                 <ColoredSlider
                   color={row.color}
+                  min={row.min}
+                  max={row.max}
+                  // Default −50…+50 rows (Chakra/Planets/Elements) show negative
+                  // scores in red. Ranged rows (Free Basic Aura Check) keep
+                  // their fixed per-row colour, so they're excluded.
+                  negativeColor={
+                    row.min === undefined && row.max === undefined
+                      ? "#E74C3C"
+                      : undefined
+                  }
                   value={rows[i].score}
                   onChange={(n) => handleRowChange(i, "score", n)}
                 />

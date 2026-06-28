@@ -12,6 +12,8 @@ import {
   Download,
   Mail,
   MessageCircle,
+  FilePlus2,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -240,11 +242,19 @@ export function AnalysisSuccessCard({
               </>
             )}
           </Button>
-          <Button onClick={onStartAnother} variant="ghost">
+        </div>
+
+        {/* Footer navigation — distinct, clearly-clickable buttons */}
+        <div className="mt-6 pt-6 border-t border-border flex flex-wrap gap-2">
+          <Button onClick={onStartAnother} variant="outline">
+            <FilePlus2 className="h-4 w-4 mr-2" />
             {startAnotherLabel}
           </Button>
           <Link href="/">
-            <Button variant="ghost">Back to dashboard</Button>
+            <Button variant="outline">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Back to dashboard
+            </Button>
           </Link>
         </div>
       </div>

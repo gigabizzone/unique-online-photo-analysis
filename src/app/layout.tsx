@@ -18,7 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Unique Online Photo Analysis | Aura Photo Science",
+  title: "Aura Photo Science",
   description: "Admin web app for Aura Photo Science aura analysis reports.",
 };
 

@@ -30,6 +30,7 @@ import {
   WearablesReport,
   type WearableItem,
 } from "@/components/reports/WearablesReport";
+import { OVERALL_RANGE_BY_KEY } from "@/constants/overall";
 
 // Per-analysis-type configuration for the generic ScoreRowsReport.
 // Phase 11.4 (Life Challenges) + Phase 11.6 (Wearables) have their own
@@ -63,8 +64,8 @@ const SCORE_ROWS_CONFIG: Record<
     dataKey: "elements",
   },
   OVERALL: {
-    reportTitle: "OVERALL ANALYSIS REPORT",
-    sectionHeading: "Overall Energy Readings",
+    reportTitle: "FREE BASIC AURA CHECK REPORT",
+    sectionHeading: "Basic Aura Energy Readings",
     notesHeading: "Implication",
     dataKey: "overall",
   },
@@ -83,13 +84,21 @@ let logoDataUrlCache: string | null | undefined;
 
 async function loadLogoDataUrl(): Promise<string | null> {
   if (logoDataUrlCache !== undefined) return logoDataUrlCache;
-  try {
-    const filePath = path.join(process.cwd(), "public", "logo.png");
-    const buf = await fs.readFile(filePath);
-    logoDataUrlCache = `data:image/png;base64,${buf.toString("base64")}`;
-  } catch {
-    logoDataUrlCache = null;
+  // The PDF has a WHITE background, so it needs the dark print logo
+  // (public/logo-report.png). The yellow website logo (public/logo.png) is
+  // built for the dark website background and is unreadable on white. Prefer
+  // the print logo; fall back to the website logo if it isn't present yet.
+  const candidates = ["logo-report.png", "logo.png"];
+  for (const name of candidates) {
+    try {
+      const buf = await fs.readFile(path.join(process.cwd(), "public", name));
+      logoDataUrlCache = `data:image/png;base64,${buf.toString("base64")}`;
+      return logoDataUrlCache;
+    } catch {
+      // file not present — try the next candidate
+    }
   }
+  logoDataUrlCache = null;
   return logoDataUrlCache;
 }
 
@@ -141,7 +150,16 @@ export async function POST(req: Request) {
     const config = SCORE_ROWS_CONFIG[entry.analysisType];
     if (config) {
       const data = entry.data as Record<string, ScoreRowsReportRow[] | undefined>;
-      const rows = data[config.dataKey] ?? [];
+      let rows = data[config.dataKey] ?? [];
+      // Free Basic Aura Check rows carry per-row score axes so the bars match
+      // the app sliders. Stored rows may predate this, so look the range up by
+      // key rather than relying on the persisted payload.
+      if (entry.analysisType === "OVERALL") {
+        rows = rows.map((r) => ({
+          ...r,
+          ...(OVERALL_RANGE_BY_KEY[r.key] ?? {}),
+        }));
+      }
       doc = (
         <ScoreRowsReport
           reportTitle={config.reportTitle}

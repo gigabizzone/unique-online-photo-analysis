@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 
 import { prisma } from "@/lib/db";
 import { BRAND } from "@/constants/branding";
+import { OVERALL_RANGE_BY_KEY } from "@/constants/overall";
 import { getBranding } from "@/lib/branding";
 import { AuraLogo } from "@/components/AuraLogo";
 import { SocialFooter } from "@/components/SocialFooter";
@@ -46,7 +47,7 @@ const PUBLIC_VIEW_CONFIG: Record<
     dataKey: "elements",
   },
   OVERALL: {
-    sectionHeading: "Overall Energy Readings",
+    sectionHeading: "Basic Aura Energy Readings",
     notesHeading: "Implication",
     dataKey: "overall",
   },
@@ -66,7 +67,7 @@ const ANALYSIS_TYPE_LABEL: Record<string, string> = {
   PLANETS: "9 Planets Analysis",
   ELEMENTS: "Elements Analysis",
   LIFE_CHALLENGES: "Life Challenges Analysis",
-  OVERALL: "Overall Analysis",
+  OVERALL: "Free Basic Aura Check",
   WEARABLES: "Wearable Items Analysis",
 };
 
@@ -121,11 +122,20 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
   const publicCfg = PUBLIC_VIEW_CONFIG[entry.analysisType];
   if (publicCfg) {
     const data = entry.data as Record<string, ScoreRowsPublicRow[] | undefined>;
+    let rows = data[publicCfg.dataKey] ?? [];
+    // Free Basic Aura Check: attach each row's score axis (looked up by key so
+    // even entries saved before per-row ranges render correctly).
+    if (entry.analysisType === "OVERALL") {
+      rows = rows.map((r) => ({
+        ...r,
+        ...(OVERALL_RANGE_BY_KEY[r.key] ?? {}),
+      }));
+    }
     body = (
       <ScoreRowsPublicView
         sectionHeading={publicCfg.sectionHeading}
         notesHeading={publicCfg.notesHeading}
-        rows={data[publicCfg.dataKey] ?? []}
+        rows={rows}
         summary={entry.summary}
       />
     );

@@ -94,6 +94,27 @@ export interface ScoreRowsReportRow {
   color: string;
   score: number;
   implication: string;
+  /** Optional per-row axis. When set, the bar uses a left-to-right fill over
+   *  [min, max] (mirroring the app slider). When absent, the bar falls back to
+   *  the −50…+50 diverging style. */
+  min?: number;
+  max?: number;
+}
+
+// Format an axis endpoint: 12 → "+12", -50 → "−50" (U+2212), 0 → "0".
+function fmtAxis(n: number): string {
+  if (n > 0) return `+${n}`;
+  if (n < 0) return `−${Math.abs(n)}`;
+  return "0";
+}
+
+// The scale labels printed under a bar. A ranged row shows just its two
+// endpoints; the default axis shows −50 / 0 / +50.
+function axisLabels(min?: number, max?: number): string[] {
+  if (typeof min === "number" && typeof max === "number") {
+    return [fmtAxis(min), fmtAxis(max)];
+  }
+  return ["−50", "0", "+50"];
 }
 
 export interface ScoreRowsReportProps {
@@ -119,12 +140,48 @@ export interface ScoreRowsReportProps {
   tagline?: string;
 }
 
-function ScoreBar({ score, color }: { score: number; color: string }) {
+function ScoreBar({
+  score,
+  color,
+  min,
+  max,
+}: {
+  score: number;
+  color: string;
+  min?: number;
+  max?: number;
+}) {
+  // Ranged row (e.g. Free Basic Aura Check): left-to-right fill over [min, max],
+  // exactly like the slider in the app form.
+  if (typeof min === "number" && typeof max === "number") {
+    const span = max - min || 1;
+    const clamped = Math.max(min, Math.min(max, score));
+    const fillPercent = ((clamped - min) / span) * 100;
+    return (
+      <View style={localStyles.barTrack}>
+        <View
+          style={[
+            localStyles.barFill,
+            {
+              left: "0%",
+              width: `${fillPercent}%`,
+              backgroundColor: color,
+              opacity: fillPercent === 0 ? 1 : 0.85,
+            },
+          ]}
+        />
+      </View>
+    );
+  }
+
+  // Default axis (−50…+50): diverging bar centred at 0.
   const pos = scoreToBarPosition(score);
   const isPositive = score >= 0;
   const leftPercent = isPositive ? 50 : pos * 100;
   const widthPercent = Math.abs(pos - 0.5) * 100;
-  const fillColor = score === 0 ? PDF_COLORS.neutralBar : color;
+  // Negative scores render red (impactful); positive keep the row colour.
+  const fillColor =
+    score === 0 ? PDF_COLORS.neutralBar : score < 0 ? "#E74C3C" : color;
   return (
     <View style={localStyles.barTrack}>
       <View style={localStyles.barCenterLine} />
@@ -198,13 +255,28 @@ export function ScoreRowsReport({
             </View>
 
             <View style={localStyles.rowCenter}>
-              <ScoreBar score={r.score} color={r.color} />
+              <ScoreBar
+                score={r.score}
+                color={r.color}
+                min={r.min}
+                max={r.max}
+              />
               <View style={localStyles.barScale}>
-                <Text style={localStyles.barScaleLabel}>−50</Text>
-                <Text style={localStyles.barScaleLabel}>0</Text>
-                <Text style={localStyles.barScaleLabel}>+50</Text>
+                {axisLabels(r.min, r.max).map((lbl, idx) => (
+                  <Text key={idx} style={localStyles.barScaleLabel}>
+                    {lbl}
+                  </Text>
+                ))}
               </View>
-              <Text style={localStyles.scoreLabel}>
+              <Text
+                style={
+                  // Negative reading turns red on default-range rows
+                  // (Free Basic Aura Check rows carry min/max and are exempt).
+                  r.min === undefined && r.max === undefined && r.score < 0
+                    ? [localStyles.scoreLabel, { color: "#E74C3C" }]
+                    : localStyles.scoreLabel
+                }
+              >
                 {r.score > 0 ? "+" : ""}
                 {r.score}
               </Text>

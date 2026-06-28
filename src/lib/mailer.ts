@@ -134,7 +134,7 @@ const ANALYSIS_TYPE_LABEL: Record<string, string> = {
   PLANETS: "9 Planets Analysis",
   ELEMENTS: "Elements Analysis",
   LIFE_CHALLENGES: "Life Challenges Analysis",
-  OVERALL: "Overall Analysis",
+  OVERALL: "Free Basic Aura Check",
   WEARABLES: "Wearable Items Analysis",
 };
 

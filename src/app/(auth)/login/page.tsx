@@ -64,9 +64,8 @@ function LoginForm() {
             ॐ
           </div>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">
-            Unique Online Photo Analysis
+            Aura Photo Science
           </h1>
-          <p className="mt-1 text-sm text-aps-gold">Aura Photo Science</p>
         </div>
 
         {/* Card */}

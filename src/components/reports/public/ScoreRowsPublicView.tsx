@@ -13,6 +13,24 @@ export interface ScoreRowsPublicRow {
   color: string;
   score: number;
   implication: string;
+  /** Optional per-row axis. When set, the bar fills left-to-right over
+   *  [min, max] (mirroring the app slider); otherwise it uses the −50…+50
+   *  diverging style. */
+  min?: number;
+  max?: number;
+}
+
+function fmtAxis(n: number): string {
+  if (n > 0) return `+${n}`;
+  if (n < 0) return `−${Math.abs(n)}`;
+  return "0";
+}
+
+function axisLabels(min?: number, max?: number): string[] {
+  if (typeof min === "number" && typeof max === "number") {
+    return [fmtAxis(min), fmtAxis(max)];
+  }
+  return ["−50", "0", "+50"];
 }
 
 export interface ScoreRowsPublicViewProps {
@@ -24,12 +42,44 @@ export interface ScoreRowsPublicViewProps {
   summary: string;
 }
 
-function ScoreBar({ score, color }: { score: number; color: string }) {
+function ScoreBar({
+  score,
+  color,
+  min,
+  max,
+}: {
+  score: number;
+  color: string;
+  min?: number;
+  max?: number;
+}) {
+  // Ranged row (e.g. Free Basic Aura Check): left-to-right fill over [min, max],
+  // matching the slider in the app form.
+  if (typeof min === "number" && typeof max === "number") {
+    const span = max - min || 1;
+    const clamped = Math.max(min, Math.min(max, score));
+    const fillPercent = ((clamped - min) / span) * 100;
+    return (
+      <div className="relative h-2.5 w-full rounded-full bg-[#E5E7EB]">
+        <div
+          className="absolute top-0 bottom-0 left-0 rounded-full"
+          style={{
+            width: `${fillPercent}%`,
+            backgroundColor: color,
+            opacity: fillPercent === 0 ? 1 : 0.9,
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Default axis (−50…+50): diverging bar centred at 0.
   const pos = scoreToBarPosition(score);
   const isPositive = score >= 0;
   const leftPercent = isPositive ? 50 : pos * 100;
   const widthPercent = Math.abs(pos - 0.5) * 100;
-  const fillColor = score === 0 ? NEUTRAL_BAR : color;
+  // Negative scores render red (impactful); positive keep the row colour.
+  const fillColor = score === 0 ? NEUTRAL_BAR : score < 0 ? "#E74C3C" : color;
   return (
     <div className="relative h-2.5 w-full rounded-full bg-[#E5E7EB]">
       <div className="absolute left-1/2 -top-1 -bottom-1 w-px bg-[#BBB3C7]" />
@@ -81,14 +131,28 @@ export function ScoreRowsPublicView({
               </div>
 
               <div className="col-span-2 sm:col-span-1 min-w-0">
-                <ScoreBar score={r.score} color={r.color} />
+                <ScoreBar
+                  score={r.score}
+                  color={r.color}
+                  min={r.min}
+                  max={r.max}
+                />
                 <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-muted-foreground">
-                  <span>−50</span>
-                  <span className="text-sm font-semibold text-foreground">
+                  <span>{axisLabels(r.min, r.max)[0]}</span>
+                  <span
+                    className="text-sm font-semibold text-foreground"
+                    style={
+                      r.min === undefined &&
+                      r.max === undefined &&
+                      r.score < 0
+                        ? { color: "#E74C3C" }
+                        : undefined
+                    }
+                  >
                     {r.score > 0 ? "+" : ""}
                     {r.score}
                   </span>
-                  <span>+50</span>
+                  <span>{axisLabels(r.min, r.max).at(-1)}</span>
                 </div>
               </div>
 

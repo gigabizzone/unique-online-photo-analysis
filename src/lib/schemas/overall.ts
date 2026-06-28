@@ -5,18 +5,32 @@ import { OVERALL_ROWS } from "@/constants/overall";
 
 const overallKeys = OVERALL_ROWS.map((r) => r.key) as [string, ...string[]];
 
-const overallRowSchema = z.object({
-  key: z.enum(overallKeys),
-  score: z
-    .number()
-    .int()
-    .min(-50, "Score must be -50 or higher")
-    .max(50, "Score must be 50 or lower"),
-  implication: z
-    .string()
-    .trim()
-    .max(2000, "Keep implication under 2000 chars"),
-});
+// Per-row valid score range, derived from the constants so the form sliders
+// and this server-side validation can never drift apart.
+const RANGE_BY_KEY = Object.fromEntries(
+  OVERALL_ROWS.map((r) => [r.key, { min: r.min, max: r.max }])
+) as Record<string, { min: number; max: number }>;
+
+const overallRowSchema = z
+  .object({
+    key: z.enum(overallKeys),
+    score: z.number().int(),
+    implication: z
+      .string()
+      .trim()
+      .max(2000, "Keep implication under 2000 chars"),
+  })
+  .superRefine((row, ctx) => {
+    const range = RANGE_BY_KEY[row.key];
+    if (!range) return;
+    if (row.score < range.min || row.score > range.max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["score"],
+        message: `Score for ${row.key} must be between ${range.min} and ${range.max}`,
+      });
+    }
+  });
 
 export const overallEntrySchema = z.object({
   profile: profileSchema,

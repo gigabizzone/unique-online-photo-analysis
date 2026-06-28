@@ -3,7 +3,7 @@
 // and the public report page. PRD v3.0 §3.
 
 export const BRAND = {
-  appName: "Unique Online Photo Analysis",
+  appName: "Aura Photo Science",
   brand: "Aura Photo Science",
   sloganEn: "World's first-of-its-kind online service",
   sloganHi: "विश्व में अपनी तरह की पहली ऑनलाइन सेवा।",
@@ -39,6 +39,14 @@ export const SOCIAL_LINKS = [
 // The `prefix` is used in publicId generation per PRD §8.2 (APS-{YYYY}-{PREFIX}-{00000}).
 export const ANALYSIS_TYPES = [
   {
+    slug: "overall",
+    label: "Free Basic Aura Check",
+    blurb: "Positive · Negative · Geopathic stress",
+    iconName: "aperture",
+    prefix: "OVR",
+    dbValue: "OVERALL",
+  },
+  {
     slug: "chakra",
     label: "7 Chakra Analysis",
     blurb: "Crown to Root — energy reading per chakra",
@@ -69,14 +77,6 @@ export const ANALYSIS_TYPES = [
     iconName: "mountain",
     prefix: "LCH",
     dbValue: "LIFE_CHALLENGES",
-  },
-  {
-    slug: "overall",
-    label: "Overall Analysis",
-    blurb: "Positive · Negative · Geopathic stress",
-    iconName: "aperture",
-    prefix: "OVR",
-    dbValue: "OVERALL",
   },
   {
     slug: "wearables",

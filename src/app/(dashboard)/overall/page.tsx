@@ -13,28 +13,30 @@ const ROWS: readonly ScoreRowDef[] = OVERALL_ROWS.map((r) => ({
   key: r.key,
   label: r.label,
   color: r.color,
+  min: r.min,
+  max: r.max,
 }));
 
 export default function OverallPage() {
   return (
     <ScoreRowsAnalysisFlow
       config={{
-        pageTitle: "Overall Analysis",
+        pageTitle: "Free Basic Aura Check",
         pageSubtitle:
-          "Score the customer's positive / negative energy and geopathic stress from −50 to +50.",
-        step2Heading: "Step 2 — Overall energies",
+          "Score the customer's positive energy, negative energy and geopathic stress.",
+        step2Heading: "Step 2 — Energy readings",
         step2Subheading:
-          "Range: −50 (deeply afflicted) to +50 (strongly favourable). 0 = neutral.",
+          "Positive Energy: 0 to +50. Negative Energy: 0 to +50. Geopathic Stress: 0 to −50.",
         rows: ROWS,
         notesLabel: "Implication",
         notesPlaceholderFor: (row) =>
           `Implication for ${row.label.toLowerCase()}…`,
         summaryPlaceholder:
           "Overall observation across positive, negative, and geopathic dimensions (2–4 paragraphs)…",
-        generateButtonLabel: "Generate Overall Report",
+        generateButtonLabel: "Generate Free Basic Aura Check Report",
         apiPath: "/api/analysis/overall",
         payloadRowsKey: "rows",
-        savedHeading: "Overall entry saved",
+        savedHeading: "Free Basic Aura Check entry saved",
       }}
     />
   );

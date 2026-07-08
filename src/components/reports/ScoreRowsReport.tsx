@@ -85,6 +85,16 @@ const localStyles = StyleSheet.create({
     color: PDF_COLORS.textDark,
     lineHeight: 1.4,
   },
+  footerNote: {
+    marginTop: 14,
+    paddingTop: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: PDF_COLORS.border,
+    fontSize: 8,
+    fontStyle: "italic",
+    color: PDF_COLORS.textMuted,
+    lineHeight: 1.5,
+  },
 });
 
 export interface ScoreRowsReportRow {
@@ -130,6 +140,8 @@ export interface ScoreRowsReportProps {
   dateGenerated: string;
   rows: ScoreRowsReportRow[];
   summary: string;
+  /** Optional clarifying scale note printed at the very end of the report. */
+  footerNote?: string;
   qrDataUrl: string;
   publicReportUrl: string;
   logoSrc?: string;
@@ -210,6 +222,7 @@ export function ScoreRowsReport({
   dateGenerated,
   rows,
   summary,
+  footerNote,
   qrDataUrl,
   publicReportUrl,
   logoSrc,
@@ -297,6 +310,10 @@ export function ScoreRowsReport({
         <View style={baseStyles.summaryCard}>
           <Text style={baseStyles.summaryText}>{summary}</Text>
         </View>
+
+        {footerNote ? (
+          <Text style={localStyles.footerNote}>{footerNote}</Text>
+        ) : null}
 
         <QRBlock qrDataUrl={qrDataUrl} publicReportUrl={publicReportUrl} />
 

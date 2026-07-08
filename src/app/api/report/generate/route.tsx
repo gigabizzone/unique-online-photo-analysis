@@ -31,6 +31,7 @@ import {
   type WearableItem,
 } from "@/components/reports/WearablesReport";
 import { OVERALL_RANGE_BY_KEY } from "@/constants/overall";
+import { buildScaleNote } from "@/constants/reportNote";
 
 // Per-analysis-type configuration for the generic ScoreRowsReport.
 // Phase 11.4 (Life Challenges) + Phase 11.6 (Wearables) have their own
@@ -43,6 +44,9 @@ const SCORE_ROWS_CONFIG: Record<
     notesHeading: string;
     /** key inside AnalysisEntry.data where the rows array lives */
     dataKey: string;
+    /** Plural noun for the end-of-report scale note. Omit to show no note
+     *  (e.g. Free Basic Aura Check, whose scale differs). */
+    itemNoun?: string;
   }
 > = {
   CHAKRA: {
@@ -50,18 +54,21 @@ const SCORE_ROWS_CONFIG: Record<
     sectionHeading: "Chakra Energy Readings",
     notesHeading: "Implication",
     dataKey: "chakras",
+    itemNoun: "Chakras",
   },
   PLANETS: {
     reportTitle: "9 PLANETS ANALYSIS REPORT",
     sectionHeading: "Planetary Energy Readings",
     notesHeading: "Recommendation",
     dataKey: "planets",
+    itemNoun: "Planets",
   },
   ELEMENTS: {
     reportTitle: "ELEMENTS ANALYSIS REPORT",
     sectionHeading: "Elemental Energy Readings",
     notesHeading: "Implication",
     dataKey: "elements",
+    itemNoun: "Elements",
   },
   OVERALL: {
     reportTitle: "FREE BASIC AURA CHECK REPORT",
@@ -74,6 +81,7 @@ const SCORE_ROWS_CONFIG: Record<
     sectionHeading: "Life Challenges",
     notesHeading: "Implication / Recommendation",
     dataKey: "challenges",
+    itemNoun: "Life Challenges",
   },
 };
 
@@ -171,6 +179,9 @@ export async function POST(req: Request) {
           dateGenerated={formatDateGenerated(entry.createdAt)}
           rows={rows}
           summary={entry.summary}
+          footerNote={
+            config.itemNoun ? buildScaleNote(config.itemNoun) : undefined
+          }
           qrDataUrl={qrDataUrl}
           publicReportUrl={publicReportUrl}
           logoSrc={logoSrc ?? undefined}

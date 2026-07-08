@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { BRAND } from "@/constants/branding";
 import { OVERALL_RANGE_BY_KEY } from "@/constants/overall";
+import { buildScaleNote } from "@/constants/reportNote";
 import { getBranding } from "@/lib/branding";
 import { AuraLogo } from "@/components/AuraLogo";
 import { SocialFooter } from "@/components/SocialFooter";
@@ -29,22 +30,31 @@ import {
 
 const PUBLIC_VIEW_CONFIG: Record<
   string,
-  { sectionHeading: string; notesHeading: string; dataKey: string }
+  {
+    sectionHeading: string;
+    notesHeading: string;
+    dataKey: string;
+    /** Plural noun for the end-of-report scale note; omit to show no note. */
+    itemNoun?: string;
+  }
 > = {
   CHAKRA: {
     sectionHeading: "Chakra Energy Readings",
     notesHeading: "Implication",
     dataKey: "chakras",
+    itemNoun: "Chakras",
   },
   PLANETS: {
     sectionHeading: "Planetary Energy Readings",
     notesHeading: "Recommendation",
     dataKey: "planets",
+    itemNoun: "Planets",
   },
   ELEMENTS: {
     sectionHeading: "Elemental Energy Readings",
     notesHeading: "Implication",
     dataKey: "elements",
+    itemNoun: "Elements",
   },
   OVERALL: {
     sectionHeading: "Basic Aura Energy Readings",
@@ -55,6 +65,7 @@ const PUBLIC_VIEW_CONFIG: Record<
     sectionHeading: "Life Challenges",
     notesHeading: "Implication / Recommendation",
     dataKey: "challenges",
+    itemNoun: "Life Challenges",
   },
 };
 
@@ -137,6 +148,9 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
         notesHeading={publicCfg.notesHeading}
         rows={rows}
         summary={entry.summary}
+        footerNote={
+          publicCfg.itemNoun ? buildScaleNote(publicCfg.itemNoun) : undefined
+        }
       />
     );
   } else if (entry.analysisType === "WEARABLES") {

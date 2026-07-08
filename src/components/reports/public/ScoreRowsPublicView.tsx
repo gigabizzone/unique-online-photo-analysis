@@ -40,6 +40,8 @@ export interface ScoreRowsPublicViewProps {
   notesHeading: string;
   rows: ScoreRowsPublicRow[];
   summary: string;
+  /** Optional clarifying scale note shown at the very end of the report. */
+  footerNote?: string;
 }
 
 function ScoreBar({
@@ -101,6 +103,7 @@ export function ScoreRowsPublicView({
   notesHeading,
   rows,
   summary,
+  footerNote,
 }: ScoreRowsPublicViewProps) {
   return (
     <>
@@ -178,6 +181,11 @@ export function ScoreRowsPublicView({
         <div className="mt-3 rounded-lg bg-aps-card-alt p-4 whitespace-pre-wrap text-sm leading-relaxed">
           {summary}
         </div>
+        {footerNote ? (
+          <p className="mt-4 border-t border-border/60 pt-3 text-xs italic leading-relaxed text-muted-foreground">
+            {footerNote}
+          </p>
+        ) : null}
       </section>
     </>
   );

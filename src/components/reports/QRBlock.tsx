@@ -25,7 +25,7 @@ export function QRBlock({ qrDataUrl, publicReportUrl }: QRBlockProps) {
       <View style={{ alignItems: "flex-end", maxWidth: 280 }}>
         <Text
           style={{
-            fontSize: 8,
+            fontSize: 9,
             textTransform: "uppercase",
             color: PDF_COLORS.textMuted,
             letterSpacing: 1,
@@ -34,7 +34,7 @@ export function QRBlock({ qrDataUrl, publicReportUrl }: QRBlockProps) {
         >
           Scan to view this report online anytime
         </Text>
-        <Text style={{ fontSize: 8, color: PDF_COLORS.textDark }}>
+        <Text style={{ fontSize: 9, color: PDF_COLORS.textDark }}>
           {publicReportUrl}
         </Text>
       </View>

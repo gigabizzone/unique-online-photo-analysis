@@ -14,10 +14,13 @@ export const PDF_COLORS = {
   bgDark2: "#1A0B3D",
   card: "#FFFFFF",
   cardAlt: "#F8F7FB",
-  gold: "#D4A24C",
+  gold: "#D4A24C", // retained token; no longer used for report text
   goldLight: "#E8B86A",
-  textDark: "#1F1B2E",
-  textMuted: "#6B6680",
+  // Headings/titles now use a dark brand purple instead of gold — gold text is
+  // hard to read on the white PDF (client feedback, 2026-07).
+  heading: "#28194A",
+  textDark: "#111111", // darkened body text for stronger contrast
+  textMuted: "#4A4658", // darkened secondary text for readability
   border: "#E5E1EC",
   red: "#E74C3C",
   green: "#2ECC71",
@@ -27,7 +30,7 @@ export const PDF_COLORS = {
 export const baseStyles = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
-    fontSize: 10,
+    fontSize: 11,
     color: PDF_COLORS.textDark,
     backgroundColor: PDF_COLORS.card,
     padding: 36, // 0.5 inch (PRD §7.7)
@@ -39,20 +42,20 @@ export const baseStyles = StyleSheet.create({
     marginBottom: 8,
   },
   appName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "bold",
     color: PDF_COLORS.textDark,
     marginTop: 6,
     letterSpacing: 0.4,
   },
   sloganEn: {
-    fontSize: 9,
+    fontSize: 10,
     color: PDF_COLORS.textMuted,
     fontStyle: "italic",
     marginTop: 2,
   },
   sloganHi: {
-    fontSize: 9,
+    fontSize: 10,
     color: PDF_COLORS.textMuted,
     marginTop: 1,
     // Devanagari script — needs Noto Sans Devanagari (registered in
@@ -60,16 +63,16 @@ export const baseStyles = StyleSheet.create({
     fontFamily: "NotoSansDevanagari",
   },
   reportTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "bold",
-    color: PDF_COLORS.gold,
+    color: PDF_COLORS.heading,
     marginTop: 10,
     letterSpacing: 1.2,
   },
   tagline: {
-    fontSize: 9,
+    fontSize: 10,
     fontStyle: "italic",
-    color: PDF_COLORS.gold,
+    color: PDF_COLORS.heading,
     marginTop: 6,
     letterSpacing: 0.5,
   },
@@ -84,21 +87,21 @@ export const baseStyles = StyleSheet.create({
     borderRadius: 4,
   },
   customerLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: PDF_COLORS.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   customerValue: {
-    fontSize: 10,
+    fontSize: 11,
     color: PDF_COLORS.textDark,
     marginTop: 1,
   },
   // ── Section heading ──
   sectionHeading: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
-    color: PDF_COLORS.gold,
+    color: PDF_COLORS.heading,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginTop: 20,
@@ -115,7 +118,7 @@ export const baseStyles = StyleSheet.create({
     marginTop: 4,
   },
   summaryText: {
-    fontSize: 10,
+    fontSize: 11,
     color: PDF_COLORS.textDark,
     lineHeight: 1.5,
   },
@@ -130,7 +133,7 @@ export const baseStyles = StyleSheet.create({
     paddingTop: 8,
   },
   footerConnectLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: PDF_COLORS.textMuted,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -143,13 +146,13 @@ export const baseStyles = StyleSheet.create({
     flexWrap: "wrap",
   },
   footerSocialLink: {
-    fontSize: 8,
+    fontSize: 9,
     color: PDF_COLORS.textDark,
     marginHorizontal: 6,
     textDecoration: "none",
   },
   legalLine: {
-    fontSize: 7,
+    fontSize: 8,
     color: PDF_COLORS.textMuted,
     textAlign: "center",
     marginTop: 6,
@@ -159,7 +162,7 @@ export const baseStyles = StyleSheet.create({
     position: "absolute",
     bottom: 12,
     right: 36,
-    fontSize: 7,
+    fontSize: 8,
     color: PDF_COLORS.textMuted,
   },
 });

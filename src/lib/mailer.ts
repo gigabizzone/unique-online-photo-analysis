@@ -25,6 +25,12 @@ function getTransporter(): Transporter {
   const secure = (process.env.SMTP_SECURE ?? "true") === "true";
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
+  // TEMPORARY diagnostic (safe — logs NO secret, only the password LENGTH) to
+  // trace the live "535 auth failed": shows what the running server actually
+  // loaded. Expect passLen=13 for the correct password. Remove after fixing.
+  console.log(
+    `[smtp-diag] host=${host ?? "MISSING"} port=${port} secure=${secure} user=${user ?? "MISSING"} passLen=${(pass ?? "").length}`
+  );
   if (!host || !user || !pass) {
     throw new Error(
       "SMTP credentials are not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS in .env.local (or Hostinger env panel in prod)."

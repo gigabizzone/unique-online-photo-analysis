@@ -40,7 +40,7 @@ export function ReportHeader({
           // eslint-disable-next-line jsx-a11y/alt-text
           <Image src={logoSrc} style={{ height: 56, objectFit: "contain" }} />
         ) : (
-          <Text style={{ fontSize: 22, color: "#D4A24C", fontWeight: "bold" }}>
+          <Text style={{ fontSize: 22, color: "#28194A", fontWeight: "bold" }}>
             ॐ
           </Text>
         )}

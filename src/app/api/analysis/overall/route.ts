@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generatePublicId } from "@/lib/publicId";
 import { overallEntrySchema } from "@/lib/schemas/overall";
+import { REPORT_FORMAT_VERSION } from "@/lib/report-display";
 import { OVERALL_ROWS } from "@/constants/overall";
 
 export async function POST(req: Request) {
@@ -37,6 +38,12 @@ export async function POST(req: Request) {
   ) as Record<string, (typeof OVERALL_ROWS)[number]>;
 
   const dataPayload = {
+    // Stamps the customer-facing presentation rules this entry was created
+    // under (percentage for Positive Energy, "Detected" wording for Negative
+    // Energy / Geopathic Stress). Entries saved before this existed have no
+    // formatVersion and keep rendering their original bars and numbers, so
+    // report links already sent to customers never change retroactively.
+    formatVersion: REPORT_FORMAT_VERSION,
     overall: rows.map((row) => {
       const meta = META_BY_KEY[row.key];
       return {

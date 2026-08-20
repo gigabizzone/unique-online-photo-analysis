@@ -9,16 +9,14 @@ const wearableRowSchema = z.object({
     .trim()
     .min(1, "Item name is required")
     .max(160, "Keep item name under 160 chars"),
-  positiveScore: z
+  // One reading per item on a single -50..+50 axis. This replaced a pair of
+  // sliders (positiveScore 0..+50 and negativeScore -50..0) that let a single
+  // object carry positive AND negative energy at once — which cannot happen.
+  score: z
     .number()
     .int()
-    .min(0, "Positive energy must be 0 or higher")
-    .max(50, "Positive energy must be 50 or lower"),
-  negativeScore: z
-    .number()
-    .int()
-    .min(-50, "Negative energy must be -50 or higher")
-    .max(0, "Negative energy must be 0 or lower"),
+    .min(-50, "Energy must be between -50 and +50")
+    .max(50, "Energy must be between -50 and +50"),
   moneyEnergy: z
     .string()
     .trim()

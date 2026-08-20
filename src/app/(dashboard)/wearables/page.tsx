@@ -1,9 +1,13 @@
 "use client";
 
 // PRD §6.6 — Wearable Items Analysis (Money Energy).
-// Each row has TWO sliders (positive 0..+50, negative -50..0) plus a
-// Money Energy Impact textarea. Below the table, 5 numbered Remarks /
-// Recommendations text inputs.
+// Each row has ONE slider (-50..+50) plus a Money Energy Impact textarea.
+// Below the table, 5 numbered Remarks / Recommendations text inputs.
+//
+// It used to carry two sliders per row (positive 0..+50 and negative -50..0),
+// which allowed a single object to hold positive AND negative energy at the
+// same time. An object has one or the other, so the pair was collapsed into a
+// single axis — the same shape the Chakra and Elements forms use.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -33,13 +37,12 @@ import { cn } from "@/lib/utils";
 
 interface WearableRowState {
   name: string;
-  positiveScore: number;
-  negativeScore: number;
+  score: number;
   moneyEnergy: string;
 }
 
 function emptyRow(): WearableRowState {
-  return { name: "", positiveScore: 0, negativeScore: 0, moneyEnergy: "" };
+  return { name: "", score: 0, moneyEnergy: "" };
 }
 
 type Phase = "profile" | "entry" | "saved";
@@ -107,8 +110,7 @@ export default function WearablesPage() {
       (r) =>
         r.name.trim().length > 0 ||
         r.moneyEnergy.trim().length > 0 ||
-        r.positiveScore !== 0 ||
-        r.negativeScore !== 0
+        r.score !== 0
     );
     if (submittableRows.length === 0) {
       setError("Please add at least one wearable item with a name.");
@@ -198,8 +200,8 @@ export default function WearablesPage() {
             Wearable Items Analysis
           </h1>
           <p className="mt-1 text-sm text-white/60">
-            Money Energy reading per object — positive + negative scores
-            and an impact note for each.
+            Money Energy reading per object — one energy score and an impact
+            note for each.
           </p>
         </div>
         <Link
@@ -252,7 +254,10 @@ export default function WearablesPage() {
             <h2 className="text-base font-semibold">Step 2 — Wearable items</h2>
             <p className="text-xs text-muted-foreground">
               {WEARABLE_DEFAULTS.minRows}–{WEARABLE_DEFAULTS.maxRows} items.
-              Positive 0→+50 (green), Negative 0→−50 (red).
+              One slider per item: −50 to +50, negative in red and positive in
+              green. These scores stay internal — the customer report shows a
+              positive item as a percentage and 0 or below as “Negative Energy
+              Detected”, so don’t quote raw scores in the impact notes.
             </p>
           </div>
           <Button
@@ -304,31 +309,21 @@ export default function WearablesPage() {
                   </Button>
                 </div>
 
-                <div className="ml-11 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs font-medium text-emerald-700 mb-1.5">
-                      Positive Energy (0 → +50)
-                    </div>
-                    <ColoredSlider
-                      color={POSITIVE_COLOR}
-                      min={0}
-                      max={50}
-                      value={row.positiveScore}
-                      onChange={(n) => updateRow(i, "positiveScore", n)}
-                    />
+                <div className="ml-11">
+                  <div className="text-xs font-medium mb-1.5">
+                    Energy (−50 → +50)
                   </div>
-                  <div>
-                    <div className="text-xs font-medium text-red-700 mb-1.5">
-                      Negative Energy (0 → −50)
-                    </div>
-                    <ColoredSlider
-                      color={NEGATIVE_COLOR}
-                      min={-50}
-                      max={0}
-                      value={row.negativeScore}
-                      onChange={(n) => updateRow(i, "negativeScore", n)}
-                    />
-                  </div>
+                  {/* One slider per item. An object carries either positive or
+                      negative energy, never both, so a single axis is the only
+                      shape that can represent it honestly. */}
+                  <ColoredSlider
+                    color={POSITIVE_COLOR}
+                    negativeColor={NEGATIVE_COLOR}
+                    min={-50}
+                    max={50}
+                    value={row.score}
+                    onChange={(n) => updateRow(i, "score", n)}
+                  />
                 </div>
 
                 <div className="ml-11">

@@ -11,6 +11,7 @@ import { prisma } from "@/lib/db";
 import { generatePublicId } from "@/lib/publicId";
 import { wearablesEntrySchema } from "@/lib/schemas/wearables";
 import { colorForWearableRow } from "@/constants/wearables";
+import { REPORT_FORMAT_VERSION } from "@/lib/report-display";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -35,12 +36,17 @@ export async function POST(req: Request) {
   const { profile, rows, remarks, summary } = parsed.data;
 
   const dataPayload = {
+    // Presentation rules this entry was created under: a positive reading
+    // shows as a percentage, anything at or below zero shows only as
+    // "Negative Energy Detected". Entries saved before this have no
+    // formatVersion and keep their original twin positive/negative bars, so
+    // links already delivered to customers never change retroactively.
+    formatVersion: REPORT_FORMAT_VERSION,
     items: rows.map((row, idx) => ({
       key: `i${idx + 1}`,
       name: row.name,
       color: colorForWearableRow(idx),
-      positiveScore: row.positiveScore,
-      negativeScore: row.negativeScore,
+      score: row.score,
       moneyEnergy: row.moneyEnergy,
     })),
     remarks,

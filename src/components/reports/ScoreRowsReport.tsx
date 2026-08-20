@@ -19,6 +19,7 @@ import { ReportFooter } from "./ReportFooter";
 import { QRBlock } from "./QRBlock";
 import { PDF_COLORS, baseStyles } from "./report-theme";
 import { scoreToBarPosition } from "@/lib/score-color";
+import type { RowDisplay } from "@/lib/report-display";
 
 const localStyles = StyleSheet.create({
   row: {
@@ -71,6 +72,18 @@ const localStyles = StyleSheet.create({
     marginTop: 4,
     color: PDF_COLORS.textDark,
   },
+  // "Negative Energy Detected" / "Geopathic Stress Not Detected" — replaces
+  // the bar and number entirely on Free Basic Aura Check v2 rows.
+  detectLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: PDF_COLORS.textDark,
+  },
+  // The Positive Energy percentage, printed on its own with no bar or axis.
+  percentLabel: {
+    fontSize: 15,
+    fontWeight: "bold",
+  },
   rowRight: { width: 200, flexShrink: 0, paddingLeft: 10 },
   rowImplicationHeading: {
     fontSize: 8,
@@ -108,6 +121,11 @@ export interface ScoreRowsReportRow {
    *  the −50…+50 diverging style. */
   min?: number;
   max?: number;
+  /** Free Basic Aura Check (v2 entries only): replaces the raw score readout
+   *  with a percentage, or with a "Detected" / "Not Detected" sentence that
+   *  prints no bar and no number. Absent for every other analysis type and
+   *  for entries created before this rule existed. */
+  display?: RowDisplay;
 }
 
 // Format an axis endpoint: 12 → "+12", -50 → "−50" (U+2212), 0 → "0".
@@ -267,31 +285,75 @@ export function ScoreRowsReport({
             </View>
 
             <View style={localStyles.rowCenter}>
-              <ScoreBar
-                score={r.score}
-                color={r.color}
-                min={r.min}
-                max={r.max}
-              />
-              <View style={localStyles.barScale}>
-                {axisLabels(r.min, r.max).map((lbl, idx) => (
-                  <Text key={idx} style={localStyles.barScaleLabel}>
-                    {lbl}
+              {r.display?.mode === "detect" ? (
+                // Negative Energy / Geopathic Stress: presence is the whole
+                // message. No bar and no number, so the recorded score stays
+                // an admin-side record and never reaches the customer.
+                <Text
+                  style={[
+                    localStyles.detectLabel,
+                    { color: r.display.detected ? r.color : "#6B7280" },
+                  ]}
+                >
+                  {r.display.text}
+                </Text>
+              ) : r.display?.mode === "percent" ? (
+                // A share of the positive half-axis: +25 of 50 prints as 50%.
+                // Chakra/Planets/Elements keep a 0-100% bar because a strong
+                // reading is good news worth showing; the Free Basic Aura
+                // Check prints the figure alone.
+                r.display.bar ? (
+                  <>
+                    <ScoreBar
+                      score={r.display.percent}
+                      color={r.color}
+                      min={0}
+                      max={100}
+                    />
+                    <View style={localStyles.barScale}>
+                      <Text style={localStyles.barScaleLabel}>0%</Text>
+                      <Text style={localStyles.barScaleLabel}>100%</Text>
+                    </View>
+                    <Text style={[localStyles.scoreLabel, { color: r.color }]}>
+                      {r.display.percent}%
+                      {r.display.suffix ? ` ${r.display.suffix}` : ""}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[localStyles.percentLabel, { color: r.color }]}>
+                    {r.display.percent}%
+                    {r.display.suffix ? ` ${r.display.suffix}` : ""}
                   </Text>
-                ))}
-              </View>
-              <Text
-                style={
-                  // Negative reading turns red on default-range rows
-                  // (Free Basic Aura Check rows carry min/max and are exempt).
-                  r.min === undefined && r.max === undefined && r.score < 0
-                    ? [localStyles.scoreLabel, { color: "#E74C3C" }]
-                    : localStyles.scoreLabel
-                }
-              >
-                {r.score > 0 ? "+" : ""}
-                {r.score}
-              </Text>
+                )
+              ) : (
+                <>
+                  <ScoreBar
+                    score={r.score}
+                    color={r.color}
+                    min={r.min}
+                    max={r.max}
+                  />
+                  <View style={localStyles.barScale}>
+                    {axisLabels(r.min, r.max).map((lbl, idx) => (
+                      <Text key={idx} style={localStyles.barScaleLabel}>
+                        {lbl}
+                      </Text>
+                    ))}
+                  </View>
+                  <Text
+                    style={
+                      // Negative reading turns red on default-range rows
+                      // (Free Basic Aura Check rows carry min/max, exempt).
+                      r.min === undefined && r.max === undefined && r.score < 0
+                        ? [localStyles.scoreLabel, { color: "#E74C3C" }]
+                        : localStyles.scoreLabel
+                    }
+                  >
+                    {r.score > 0 ? "+" : ""}
+                    {r.score}
+                  </Text>
+                </>
+              )}
             </View>
 
             <View style={localStyles.rowRight}>

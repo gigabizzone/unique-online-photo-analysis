@@ -15,18 +15,30 @@ import { ReportHeader } from "./ReportHeader";
 import { ReportFooter } from "./ReportFooter";
 import { QRBlock } from "./QRBlock";
 import { PDF_COLORS, baseStyles } from "./report-theme";
+import type { RowDisplay } from "@/lib/report-display";
 
 const POSITIVE_COLOR = "#2ECC71";
 const NEGATIVE_COLOR = "#E74C3C";
 
 const styles = StyleSheet.create({
+  // Same three-column shape as ScoreRowsReport (Chakra / Planets / Elements):
+  // name on the left, reading in the middle, notes on the right.
   item: {
-    marginTop: 14,
-    paddingBottom: 14,
+    flexDirection: "row",
+    marginTop: 12,
+    paddingBottom: 12,
     borderBottomWidth: 0.5,
     borderBottomColor: PDF_COLORS.border,
   },
-  itemHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  itemLeft: {
+    width: 130,
+    flexShrink: 0,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  itemCenter: { flex: 1, paddingHorizontal: 10 },
+  itemRight: { width: 200, flexShrink: 0, paddingLeft: 10 },
   numBadge: {
     width: 18,
     height: 18,
@@ -76,13 +88,17 @@ const styles = StyleSheet.create({
     color: PDF_COLORS.textDark,
     marginTop: 2,
   },
+  // "Negative Energy Detected" — replaces the bar and number entirely.
+  detectLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+  },
   moneyHeading: {
     fontSize: 8,
     fontWeight: "bold",
     color: PDF_COLORS.heading,
     textTransform: "uppercase",
     letterSpacing: 1,
-    marginTop: 8,
     marginBottom: 2,
   },
   moneyBody: {
@@ -115,9 +131,15 @@ export interface WearableItem {
   key: string;
   name: string;
   color: string;
-  positiveScore: number;
-  negativeScore: number;
   moneyEnergy: string;
+  /** Single -50..+50 reading. Present on entries saved after the twin-slider
+   *  form was replaced; absent on legacy entries. */
+  score?: number;
+  /** Legacy twin scores, kept so already-delivered reports still render. */
+  positiveScore?: number;
+  negativeScore?: number;
+  /** v2 entries only: percentage (with bar) or "Negative Energy Detected". */
+  display?: RowDisplay;
 }
 
 export interface WearablesReportProps {
@@ -211,45 +233,72 @@ export function WearablesReport({
 
         {items.map((it, i) => (
           <View key={it.key} style={styles.item} wrap={false}>
-            <View style={styles.itemHeader}>
-              <Text
-                style={[
-                  styles.numBadge,
-                  { backgroundColor: it.color },
-                ]}
-              >
+            <View style={styles.itemLeft}>
+              <Text style={[styles.numBadge, { backgroundColor: it.color }]}>
                 {i + 1}
               </Text>
-              <Text style={styles.itemName}>{it.name}</Text>
-            </View>
-
-            <View style={styles.barsRow}>
-              <View style={styles.barCol}>
-                <Text style={[styles.barLabel, { color: POSITIVE_COLOR }]}>
-                  Positive Energy
-                </Text>
-                <PositiveBar value={it.positiveScore} />
-                <View style={styles.barScale}>
-                  <Text style={styles.barScaleLabel}>0</Text>
-                  <Text style={styles.barScaleLabel}>+50</Text>
-                </View>
-                <Text style={styles.scoreLabel}>+{it.positiveScore}</Text>
-              </View>
-              <View style={styles.barCol}>
-                <Text style={[styles.barLabel, { color: NEGATIVE_COLOR }]}>
-                  Negative Energy
-                </Text>
-                <NegativeBar value={it.negativeScore} />
-                <View style={styles.barScale}>
-                  <Text style={styles.barScaleLabel}>0</Text>
-                  <Text style={styles.barScaleLabel}>−50</Text>
-                </View>
-                <Text style={styles.scoreLabel}>{it.negativeScore}</Text>
+              <View>
+                <Text style={styles.itemName}>{it.name}</Text>
               </View>
             </View>
 
-            <Text style={styles.moneyHeading}>Money Energy Impact</Text>
-            <Text style={styles.moneyBody}>{it.moneyEnergy || "—"}</Text>
+            <View style={styles.itemCenter}>
+              {it.display?.mode === "percent" ? (
+                // One reading per object: a share of the positive half-axis,
+                // with a bar, exactly as a chakra reads.
+                <>
+                  <PositiveBar value={(it.display.percent / 100) * 50} />
+                  <View style={styles.barScale}>
+                    <Text style={styles.barScaleLabel}>0%</Text>
+                    <Text style={styles.barScaleLabel}>100%</Text>
+                  </View>
+                  <Text style={[styles.scoreLabel, { color: POSITIVE_COLOR }]}>
+                    {it.display.percent}%
+                    {it.display.suffix ? ` ${it.display.suffix}` : ""}
+                  </Text>
+                </>
+              ) : it.display?.mode === "detect" ? (
+                // No bar and no number — the score stays an admin-side record.
+                <Text style={[styles.detectLabel, { color: NEGATIVE_COLOR }]}>
+                  {it.display.text}
+                </Text>
+              ) : (
+                // Legacy entry: twin positive/negative bars, as delivered.
+                <View style={styles.barsRow}>
+                  <View style={styles.barCol}>
+                    <Text style={[styles.barLabel, { color: POSITIVE_COLOR }]}>
+                      Positive Energy
+                    </Text>
+                    <PositiveBar value={it.positiveScore ?? 0} />
+                    <View style={styles.barScale}>
+                      <Text style={styles.barScaleLabel}>0</Text>
+                      <Text style={styles.barScaleLabel}>+50</Text>
+                    </View>
+                    <Text style={styles.scoreLabel}>
+                      +{it.positiveScore ?? 0}
+                    </Text>
+                  </View>
+                  <View style={styles.barCol}>
+                    <Text style={[styles.barLabel, { color: NEGATIVE_COLOR }]}>
+                      Negative Energy
+                    </Text>
+                    <NegativeBar value={it.negativeScore ?? 0} />
+                    <View style={styles.barScale}>
+                      <Text style={styles.barScaleLabel}>0</Text>
+                      <Text style={styles.barScaleLabel}>−50</Text>
+                    </View>
+                    <Text style={styles.scoreLabel}>
+                      {it.negativeScore ?? 0}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.itemRight}>
+              <Text style={styles.moneyHeading}>Money Energy Impact</Text>
+              <Text style={styles.moneyBody}>{it.moneyEnergy || "—"}</Text>
+            </View>
           </View>
         ))}
 

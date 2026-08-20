@@ -30,8 +30,14 @@ import {
   WearablesReport,
   type WearableItem,
 } from "@/components/reports/WearablesReport";
-import { OVERALL_RANGE_BY_KEY } from "@/constants/overall";
-import { buildScaleNote } from "@/constants/reportNote";
+import {
+  enrichOverallRows,
+  enrichPolarityRows,
+  enrichWearableItems,
+  isPolarityType,
+  isReportV2,
+} from "@/lib/report-display";
+import { buildScaleNote, buildPolarityScaleNote } from "@/constants/reportNote";
 
 // Per-analysis-type configuration for the generic ScoreRowsReport.
 // Phase 11.4 (Life Challenges) + Phase 11.6 (Wearables) have their own
@@ -159,14 +165,15 @@ export async function POST(req: Request) {
     if (config) {
       const data = entry.data as Record<string, ScoreRowsReportRow[] | undefined>;
       let rows = data[config.dataKey] ?? [];
+      const isV2 = isReportV2(entry.data);
+      const isPolarity = isPolarityType(entry.analysisType);
       // Free Basic Aura Check rows carry per-row score axes so the bars match
       // the app sliders. Stored rows may predate this, so look the range up by
       // key rather than relying on the persisted payload.
       if (entry.analysisType === "OVERALL") {
-        rows = rows.map((r) => ({
-          ...r,
-          ...(OVERALL_RANGE_BY_KEY[r.key] ?? {}),
-        }));
+        rows = enrichOverallRows(rows, isV2);
+      } else if (isPolarity) {
+        rows = enrichPolarityRows(rows, isV2);
       }
       doc = (
         <ScoreRowsReport
@@ -180,7 +187,11 @@ export async function POST(req: Request) {
           rows={rows}
           summary={entry.summary}
           footerNote={
-            config.itemNoun ? buildScaleNote(config.itemNoun) : undefined
+            config.itemNoun
+              ? isV2 && isPolarity
+                ? buildPolarityScaleNote(config.itemNoun)
+                : buildScaleNote(config.itemNoun)
+              : undefined
           }
           qrDataUrl={qrDataUrl}
           publicReportUrl={publicReportUrl}
@@ -202,7 +213,7 @@ export async function POST(req: Request) {
           customerGender={entry.customer.gender}
           publicId={entry.publicId}
           dateGenerated={formatDateGenerated(entry.createdAt)}
-          items={data.items ?? []}
+          items={enrichWearableItems(data.items ?? [], isReportV2(entry.data))}
           remarks={data.remarks ?? []}
           summary={entry.summary}
           qrDataUrl={qrDataUrl}

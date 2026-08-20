@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { generatePublicId } from "@/lib/publicId";
 import { lifeChallengesEntrySchema } from "@/lib/schemas/life-challenges";
 import { colorForLifeChallengeRow } from "@/constants/life-challenges";
+import { REPORT_FORMAT_VERSION } from "@/lib/report-display";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -36,6 +37,12 @@ export async function POST(req: Request) {
   const { profile, rows, summary } = parsed.data;
 
   const dataPayload = {
+    // Presentation rules this entry was created under: a positive reading
+    // shows as a percentage, anything at or below zero shows only as
+    // "Negative Energy Detected". Entries saved before this have no
+    // formatVersion and keep their original bars and numbers, so links
+    // already delivered to customers never change retroactively.
+    formatVersion: REPORT_FORMAT_VERSION,
     challenges: rows.map((row, idx) => ({
       key: `c${idx + 1}`,
       label: row.label,

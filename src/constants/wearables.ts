@@ -1,7 +1,11 @@
 // Wearable Items / Money Energy per PRD §6.6.
-// Rows are dynamic (1..10, starts at 3). Each row has TWO sliders —
-// a positive-energy slider (0..+50) and a negative-energy slider
-// (-50..0). Plus a Money Energy Impact textarea per row.
+// Rows are dynamic (1..10, starts at 3). Each row has ONE slider spanning
+// -50..+50, plus a Money Energy Impact textarea.
+//
+// The form previously carried TWO sliders per row — positive (0..+50) and
+// negative (-50..0) — which let a single object record positive AND negative
+// energy simultaneously. An object holds one or the other, so the pair was
+// collapsed onto a single axis.
 //
 // The form also has a separate "Remarks / Recommendations" section
 // with exactly 5 numbered text inputs at the bottom.

@@ -20,6 +20,7 @@ import { prisma } from "@/lib/db";
 import { generatePublicId } from "@/lib/publicId";
 import { chakraEntrySchema } from "@/lib/schemas/chakra";
 import { CHAKRAS } from "@/constants/chakras";
+import { REPORT_FORMAT_VERSION } from "@/lib/report-display";
 
 export async function POST(req: Request) {
   // 0. Auth
@@ -52,6 +53,12 @@ export async function POST(req: Request) {
   ) as Record<string, (typeof CHAKRAS)[number]>;
 
   const dataPayload = {
+    // Presentation rules this entry was created under: a positive reading
+    // shows as a percentage, anything at or below zero shows only as
+    // "Negative Energy Detected". Entries saved before this have no
+    // formatVersion and keep their original bars and numbers, so links
+    // already delivered to customers never change retroactively.
+    formatVersion: REPORT_FORMAT_VERSION,
     chakras: chakras.map((row) => {
       const meta = META_BY_KEY[row.key];
       return {

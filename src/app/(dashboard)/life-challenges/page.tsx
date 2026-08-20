@@ -237,7 +237,10 @@ export default function LifeChallengesPage() {
             <p className="text-xs text-muted-foreground">
               {LIFE_CHALLENGE_DEFAULTS.minRows}–
               {LIFE_CHALLENGE_DEFAULTS.maxRows} rows. Severity range: −50 (most
-              adverse) to +50 (already overcoming). 0 = neutral.
+              adverse) to +50 (already overcoming). These scores stay internal:
+              the customer report shows a positive score as a percentage, while
+              0 and below show only as “Negative Energy Detected” — so don’t
+              quote raw scores in the implications.
             </p>
           </div>
           <Button

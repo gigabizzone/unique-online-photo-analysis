@@ -13,8 +13,14 @@ import type { Metadata } from "next";
 
 import { prisma } from "@/lib/db";
 import { BRAND } from "@/constants/branding";
-import { OVERALL_RANGE_BY_KEY } from "@/constants/overall";
-import { buildScaleNote } from "@/constants/reportNote";
+import {
+  enrichOverallRows,
+  enrichPolarityRows,
+  enrichWearableItems,
+  isPolarityType,
+  isReportV2,
+} from "@/lib/report-display";
+import { buildScaleNote, buildPolarityScaleNote } from "@/constants/reportNote";
 import { getBranding } from "@/lib/branding";
 import { AuraLogo } from "@/components/AuraLogo";
 import { SocialFooter } from "@/components/SocialFooter";
@@ -134,13 +140,14 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
   if (publicCfg) {
     const data = entry.data as Record<string, ScoreRowsPublicRow[] | undefined>;
     let rows = data[publicCfg.dataKey] ?? [];
+    const isV2 = isReportV2(entry.data);
+    const isPolarity = isPolarityType(entry.analysisType);
     // Free Basic Aura Check: attach each row's score axis (looked up by key so
     // even entries saved before per-row ranges render correctly).
     if (entry.analysisType === "OVERALL") {
-      rows = rows.map((r) => ({
-        ...r,
-        ...(OVERALL_RANGE_BY_KEY[r.key] ?? {}),
-      }));
+      rows = enrichOverallRows(rows, isV2);
+    } else if (isPolarity) {
+      rows = enrichPolarityRows(rows, isV2);
     }
     body = (
       <ScoreRowsPublicView
@@ -149,7 +156,11 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
         rows={rows}
         summary={entry.summary}
         footerNote={
-          publicCfg.itemNoun ? buildScaleNote(publicCfg.itemNoun) : undefined
+          publicCfg.itemNoun
+            ? isV2 && isPolarity
+              ? buildPolarityScaleNote(publicCfg.itemNoun)
+              : buildScaleNote(publicCfg.itemNoun)
+            : undefined
         }
       />
     );
@@ -160,7 +171,7 @@ export default async function PublicReportPage({ params }: ReportPageProps) {
     };
     body = (
       <WearablesPublicView
-        items={data.items ?? []}
+        items={enrichWearableItems(data.items ?? [], isReportV2(entry.data))}
         remarks={data.remarks ?? []}
         summary={entry.summary}
       />

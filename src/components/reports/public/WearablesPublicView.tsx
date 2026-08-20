@@ -1,6 +1,8 @@
 // HTML public view for the Wearable Items / Money Energy report.
 // Used by /report/[publicId] when analysisType === "WEARABLES".
 
+import type { RowDisplay } from "@/lib/report-display";
+
 const POSITIVE_COLOR = "#2ECC71";
 const NEGATIVE_COLOR = "#E74C3C";
 
@@ -8,9 +10,15 @@ export interface WearableItemPublic {
   key: string;
   name: string;
   color: string;
-  positiveScore: number;
-  negativeScore: number;
   moneyEnergy: string;
+  /** Single -50..+50 reading. Present on entries saved after the twin-slider
+   *  form was replaced; absent on legacy entries. */
+  score?: number;
+  /** Legacy twin scores, kept so already-delivered reports still render. */
+  positiveScore?: number;
+  negativeScore?: number;
+  /** v2 entries only: percentage (with bar) or "Negative Energy Detected". */
+  display?: RowDisplay;
 }
 
 export interface WearablesPublicViewProps {
@@ -66,9 +74,11 @@ export function WearablesPublicView({
         </h2>
         <div className="mt-5 space-y-6">
           {items.map((it, i) => (
+            // Same three-column shape as ScoreRowsPublicView (Chakra /
+            // Planets / Elements): name, reading, notes.
             <div
               key={it.key}
-              className="space-y-3 pb-5 border-b border-border/60 last:border-b-0 last:pb-0"
+              className="grid grid-cols-[auto_1fr] sm:grid-cols-[180px_1fr_minmax(0,1fr)] gap-3 sm:gap-5 items-start border-b border-border/60 last:border-b-0 pb-5 last:pb-0"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -78,25 +88,64 @@ export function WearablesPublicView({
                 >
                   {i + 1}
                 </div>
-                <div className="text-sm font-semibold">{it.name}</div>
+                <div className="min-w-0 text-sm font-semibold">{it.name}</div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:ml-10">
-                <div>
-                  <div className="text-[10px] font-bold tracking-[0.16em] uppercase mb-1" style={{ color: POSITIVE_COLOR }}>
-                    Positive Energy
+              <div className="col-span-2 sm:col-span-1 min-w-0">
+                {it.display?.mode === "percent" ? (
+                  // One reading per object: a share of the positive half-axis,
+                  // with a bar, exactly as a chakra reads.
+                  <>
+                    <div className="relative h-2.5 w-full rounded-full bg-[#E5E7EB] overflow-hidden">
+                      <div
+                        className="absolute top-0 left-0 bottom-0 rounded-full"
+                        style={{
+                          width: `${it.display.percent}%`,
+                          background: POSITIVE_COLOR,
+                          opacity: 0.9,
+                        }}
+                      />
+                    </div>
+                    <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-muted-foreground">
+                      <span>0%</span>
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: POSITIVE_COLOR }}
+                      >
+                        {it.display.percent}%
+                        {it.display.suffix ? ` ${it.display.suffix}` : ""}
+                      </span>
+                      <span>100%</span>
+                    </div>
+                  </>
+                ) : it.display?.mode === "detect" ? (
+                  // No bar and no number — the score stays an admin-side record.
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: NEGATIVE_COLOR }}
+                  >
+                    {it.display.text}
+                  </p>
+                ) : (
+                  // Legacy entry: twin positive/negative bars, as delivered.
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-[10px] font-bold tracking-[0.16em] uppercase mb-1" style={{ color: POSITIVE_COLOR }}>
+                        Positive Energy
+                      </div>
+                      <HBar value={it.positiveScore ?? 0} color={POSITIVE_COLOR} scale="+50" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold tracking-[0.16em] uppercase mb-1" style={{ color: NEGATIVE_COLOR }}>
+                        Negative Energy
+                      </div>
+                      <HBar value={it.negativeScore ?? 0} color={NEGATIVE_COLOR} scale="−50" />
+                    </div>
                   </div>
-                  <HBar value={it.positiveScore} color={POSITIVE_COLOR} scale="+50" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold tracking-[0.16em] uppercase mb-1" style={{ color: NEGATIVE_COLOR }}>
-                    Negative Energy
-                  </div>
-                  <HBar value={it.negativeScore} color={NEGATIVE_COLOR} scale="−50" />
-                </div>
+                )}
               </div>
 
-              <div className="sm:ml-10">
+              <div className="col-span-2 sm:col-span-1">
                 <div className="text-[10px] font-bold tracking-[0.18em] text-aps-gold uppercase mb-1">
                   Money Energy Impact
                 </div>

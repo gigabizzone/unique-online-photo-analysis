@@ -57,6 +57,11 @@ export interface ScoreRowsFlowConfig {
   step2Subheading: string;
   /** Fixed list of rows with label + colour */
   rows: readonly ScoreRowDef[];
+  /** Groups of row keys that are mutually exclusive: once one row in a group
+   *  carries a non-zero score, the others lock at 0 until it is cleared.
+   *  Used by the Free Basic Aura Check, where a scan records either positive
+   *  or negative energy but never both. Omit for forms with no such rule. */
+  exclusiveGroups?: readonly (readonly string[])[];
   /** Label for the per-row notes textarea */
   notesLabel: string;
   /** Per-row placeholder for the notes textarea */
@@ -120,6 +125,23 @@ export function ScoreRowsAnalysisFlow({
       next[idx] = { ...next[idx], [field]: value };
       return next;
     });
+  }
+
+  // A row locks at 0 while another row in its exclusive group holds a reading.
+  // Clearing that other row back to 0 unlocks this one again, which is how the
+  // admin switches a scan from positive to negative energy.
+  function lockedBy(key: string): string | null {
+    for (const group of config.exclusiveGroups ?? []) {
+      if (!group.includes(key)) continue;
+      const holder = group.find(
+        (other) =>
+          other !== key && (rows.find((r) => r.key === other)?.score ?? 0) !== 0
+      );
+      if (holder) {
+        return config.rows.find((r) => r.key === holder)?.label ?? holder;
+      }
+    }
+    return null;
   }
 
   async function handleGenerate() {
@@ -307,7 +329,14 @@ export function ScoreRowsAnalysisFlow({
                   }
                   value={rows[i].score}
                   onChange={(n) => handleRowChange(i, "score", n)}
+                  disabled={lockedBy(row.key) !== null}
                 />
+                {lockedBy(row.key) ? (
+                  <p className="text-xs text-muted-foreground">
+                    Locked — {lockedBy(row.key)} already has a reading. Set that
+                    back to 0 to record {row.label.toLowerCase()} instead.
+                  </p>
+                ) : null}
                 <textarea
                   value={rows[i].implication}
                   onChange={(e) =>

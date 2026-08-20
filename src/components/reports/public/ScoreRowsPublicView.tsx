@@ -3,6 +3,7 @@
 // and Phase 11.6 Wearables have their own views (different shape).
 
 import { scoreToBarPosition } from "@/lib/score-color";
+import type { RowDisplay } from "@/lib/report-display";
 
 const NEUTRAL_BAR = "#E5E7EB";
 
@@ -18,6 +19,11 @@ export interface ScoreRowsPublicRow {
    *  diverging style. */
   min?: number;
   max?: number;
+  /** Free Basic Aura Check (v2 entries only): overrides the raw score readout
+   *  with a percentage, or with a "Detected" / "Not Detected" sentence that
+   *  shows no bar and no number. Absent for every other analysis type and for
+   *  entries created before this rule existed. */
+  display?: RowDisplay;
 }
 
 function fmtAxis(n: number): string {
@@ -134,29 +140,76 @@ export function ScoreRowsPublicView({
               </div>
 
               <div className="col-span-2 sm:col-span-1 min-w-0">
-                <ScoreBar
-                  score={r.score}
-                  color={r.color}
-                  min={r.min}
-                  max={r.max}
-                />
-                <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-muted-foreground">
-                  <span>{axisLabels(r.min, r.max)[0]}</span>
-                  <span
-                    className="text-sm font-semibold text-foreground"
-                    style={
-                      r.min === undefined &&
-                      r.max === undefined &&
-                      r.score < 0
-                        ? { color: "#E74C3C" }
-                        : undefined
-                    }
+                {r.display?.mode === "detect" ? (
+                  // Negative Energy / Geopathic Stress: presence is the entire
+                  // message. No bar and no number, so the underlying score
+                  // stays an admin-only record.
+                  <p
+                    className="text-sm font-semibold"
+                    style={{
+                      color: r.display.detected ? r.color : "#6B7280",
+                    }}
                   >
-                    {r.score > 0 ? "+" : ""}
-                    {r.score}
-                  </span>
-                  <span>{axisLabels(r.min, r.max).at(-1)}</span>
-                </div>
+                    {r.display.text}
+                  </p>
+                ) : r.display?.mode === "percent" ? (
+                  // A share of the positive half-axis: +25 of 50 reads as 50%.
+                  // Chakra/Planets/Elements keep a 0-100% bar because a strong
+                  // reading is good news worth showing; the Free Basic Aura
+                  // Check prints the figure alone.
+                  r.display.bar ? (
+                    <>
+                      <ScoreBar
+                        score={r.display.percent}
+                        color={r.color}
+                        min={0}
+                        max={100}
+                      />
+                      <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-muted-foreground">
+                        <span>0%</span>
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: r.color }}
+                        >
+                          {r.display.percent}%
+                          {r.display.suffix ? ` ${r.display.suffix}` : ""}
+                        </span>
+                        <span>100%</span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-lg font-bold" style={{ color: r.color }}>
+                      {r.display.percent}%
+                      {r.display.suffix ? ` ${r.display.suffix}` : ""}
+                    </p>
+                  )
+                ) : (
+                  <>
+                    <ScoreBar
+                      score={r.score}
+                      color={r.color}
+                      min={r.min}
+                      max={r.max}
+                    />
+                    <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-muted-foreground">
+                      <span>{axisLabels(r.min, r.max)[0]}</span>
+                      <span
+                        className="text-sm font-semibold text-foreground"
+                        style={
+                          r.min === undefined &&
+                          r.max === undefined &&
+                          r.score < 0
+                            ? { color: "#E74C3C" }
+                            : undefined
+                        }
+                      >
+                        {r.score > 0 ? "+" : ""}
+                        {r.score}
+                      </span>
+                      <span>{axisLabels(r.min, r.max).at(-1)}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="col-span-2 sm:col-span-1">

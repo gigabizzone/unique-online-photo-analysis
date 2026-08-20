@@ -123,11 +123,11 @@ export const baseStyles = StyleSheet.create({
     lineHeight: 1.5,
   },
   // ── Footer (PRD §7.5 + §7.6) ──
+  // Flows at the end of the document rather than being pinned to each page.
+  // Absolute positioning here (with `fixed` on the View) repeated the footer
+  // on every page and let body text run underneath it on multi-page reports.
   footer: {
-    position: "absolute",
-    bottom: 24,
-    left: 36,
-    right: 36,
+    marginTop: 18,
     borderTopWidth: 1,
     borderTopColor: PDF_COLORS.border,
     paddingTop: 8,
@@ -157,12 +157,5 @@ export const baseStyles = StyleSheet.create({
     textAlign: "center",
     marginTop: 6,
     fontStyle: "italic",
-  },
-  pageNumber: {
-    position: "absolute",
-    bottom: 12,
-    right: 36,
-    fontSize: 8,
-    color: PDF_COLORS.textMuted,
   },
 });
